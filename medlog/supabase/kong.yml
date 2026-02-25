@@ -1,0 +1,18 @@
+_format_version: "1.1"
+
+services:
+  - name: auth
+    url: http://medlog_auth:9999
+    routes:
+      - name: auth-route
+        paths:
+          - /auth/v1
+        strip_path: true
+
+  - name: rest
+    url: http://medlog_rest:3000
+    routes:
+      - name: rest-route
+        paths:
+          - /rest/v1
+        strip_path: true
