@@ -438,20 +438,72 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 ---
 
-## Next Steps (Immediate)
+## Next Steps (Immediate Priorities)
 
-1. **Add Stripe integration** - Most critical for SaaS monetization
-2. **Create Reports API** - Needed for program compliance
-3. **Enhance Progress page** - Add milestone assessments
-4. **Add Notifications** - Improve user engagement
-5. **Create Audit Logs** - Required for ACGME compliance
+### 1. Phase 4: Stripe Integration (Critical)
+- Create checkout, webhook, and portal endpoints
+- Connect Free/Basic/Pro plans to Stripe
+- Test payment flow end-to-end
+- **Effort**: 2-3 days
+
+### 2. Phase 5: Reports API (Compliance Required)
+- Build case volume, minimums, resident summary endpoints
+- Add PDF/CSV export functionality
+- Create reports dashboard page
+- **Effort**: 3-4 days
+
+### 3. Phase 6: AI Production Ready
+- Add provider configuration UI
+- Implement rate limiting
+- Track usage per resident
+- **Effort**: 3-4 days
+
+### 4. Phase 7: Notifications
+- Build notification system
+- Add email integration
+- Create notification preferences
+- **Effort**: 2-3 days
+
+### 5. Phase 9: Analytics Dashboard
+- Enhance existing analytics
+- Add program-wide insights
+- Create comparison features
+- **Effort**: 4-5 days
+
+---
+
+## Implementation Order
+
+```
+Phase 1-3 (Done)
+    ↓
+Phase 4: Payments ← START HERE
+    ↓
+Phase 5: Reports
+    ↓
+Phase 6: AI
+    ↓
+Phase 7: Notifications
+    ↓
+Phase 8: Mobile (Optional)
+    ↓
+Phase 9: Analytics
+    ↓
+Phase 10: Developer API
+    ↓
+Phase 11: Portfolio
+```
 
 ---
 
 ## Notes
 
-- All Phase 1 & Phase 2 core features are implemented
-- 516 CPT surgical codes and 213 ICD-10 codes are seeded
+- **Phase 1-3**: Core features complete ✅
+- **Phase 4-7**: High priority - essential for SaaS business
+- **Phase 8**: Optional - depends on user demand
+- **Phase 9-11**: Growth features - enhance user value
+- All 516 CPT surgical codes and 213 ICD-10 codes are seeded
 - 14 ACGME milestones and 19 case minimums configured
 - 15-country configuration ready
 - Frontend pages for pricing and progress created
+- Plan covers MVP to Enterprise SaaS deployment
