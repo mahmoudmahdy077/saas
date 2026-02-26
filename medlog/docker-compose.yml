@@ -132,6 +132,10 @@ services:
       SUPABASE_SERVICE_ROLE_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaXNzIjoic3VwYWJhc2UiLCJpYXQiOjE3NzE5NzUwNzAsImV4cCI6MTgwMzUxMTA3MH0.gAUUJDyv1RxGUj1twuTJqnufslZVUVmmLgQbMbUaR00
       DATABASE_URL: postgresql://postgres:${DB_PASSWORD:-medlog2024}@db:5432/medlog
       DB_PASSWORD: ${DB_PASSWORD:-medlog2024}
+      MINIO_ENDPOINT: storage
+      MINIO_PORT: 9000
+      MINIO_USER: ${MINIO_USER:-medlog}
+      MINIO_PASSWORD: ${MINIO_PASSWORD:-medlog2024}
       NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
       NEXTAUTH_URL: http://localhost
     ports:

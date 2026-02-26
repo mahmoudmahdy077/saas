@@ -23,7 +23,13 @@ export default function Home() {
               <Stethoscope className="h-8 w-8 text-primary-600" />
               <span className="text-xl font-bold text-primary-900">MedLog</span>
             </div>
-            <nav className="flex items-center gap-4">
+            <nav className="flex items-center gap-6">
+              <Link
+                href="/pricing"
+                className="text-gray-600 hover:text-primary-600 font-medium transition-colors"
+              >
+                Pricing
+              </Link>
               <Link
                 href="/login"
                 className="text-gray-600 hover:text-primary-600 font-medium transition-colors"

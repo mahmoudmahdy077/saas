@@ -285,4 +285,171 @@ export default function CaseDetailPage() {
               </div>
 
               <div>
-                <label className="text-sm t
+                <label className="text-sm text-gray-500">Your Role</label>
+                <p className="font-medium text-gray-900 flex items-center gap-2">
+                  <User className="h-4 w-4 text-gray-400" />
+                  {roles.find(r => r.value === caseData.role)?.label || caseData.role}
+                </p>
+              </div>
+
+              <div>
+                <label className="text-sm text-gray-500">Patient Demographics</label>
+                <p className="font-medium text-gray-900">
+                  Age: {caseData.patient_demographics?.age || 'Not specified'}, 
+                  Gender: {getGenderLabel(caseData.patient_demographics?.gender || 'prefer-not-to-say')}
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="text-sm text-gray-500">Diagnosis</label>
+                <p className="font-medium text-gray-900">
+                  {caseData.diagnosis || 'Not specified'}
+                </p>
+              </div>
+
+              <div>
+                <label className="text-sm text-gray-500">Complications</label>
+                {caseData.complications && caseData.complications.length > 0 ? (
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {caseData.complications.map((comp, i) => (
+                      <span key={i} className="px-2 py-1 bg-red-50 text-red-700 rounded text-sm">
+                        {comp}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-green-600 font-medium">None</p>
+                )}
+              </div>
+
+              {caseData.subcategory && (
+                <div>
+                  <label className="text-sm text-gray-500">Subcategory</label>
+                  <p className="font-medium text-gray-900">{caseData.subcategory}</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {caseData.notes && (
+            <div className="mt-6 pt-6 border-t border-gray-100">
+              <label className="text-sm text-gray-500 mb-2 block">Notes</label>
+              <p className="text-gray-700 whitespace-pre-wrap">{caseData.notes}</p>
+            </div>
+          )}
+        </div>
+
+        {/* Images Section */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Case Images</h2>
+            {isOwner && caseData.verification_status === 'self' && (
+              <div className="flex gap-2">
+                <button onClick={() => handleImageUpload('preop')} className="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded flex items-center gap-1">
+                  <Upload className="h-3 w-3" /> Preop
+                </button>
+                <button onClick={() => handleImageUpload('images')} className="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded flex items-center gap-1">
+                  <Upload className="h-3 w-3" /> Intraop
+                </button>
+                <button onClick={() => handleImageUpload('postop')} className="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded flex items-center gap-1">
+                  <Upload className="h-3 w-3" /> Postop
+                </button>
+              </div>
+            )}
+          </div>
+          
+          {(!caseData.images?.length && !caseData.preop_images?.length && !caseData.postop_images?.length) ? (
+            <div className="text-center py-8 text-gray-500">
+              <ImageIcon className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+              <p>No images uploaded yet</p>
+              {isOwner && caseData.verification_status === 'self' && (
+                <p className="text-sm mt-1">Click the buttons above to add preoperative, intraoperative, or postoperative images</p>
+              )}
+            </div>
+          ) : (
+            <>
+              {caseData.preop_images?.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">Preoperative Images</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {caseData.preop_images.map((img: any, i: number) => (
+                      <div key={i} className="relative group">
+                        <a href={img.url} target="_blank" rel="noopener noreferrer" className="block aspect-square rounded-lg overflow-hidden border hover:ring-2 hover:ring-primary transition-all">
+                          <img src={img.url} alt={img.name} className="w-full h-full object-cover" />
+                        </a>
+                        {isOwner && caseData.verification_status === 'self' && (
+                          <button
+                            onClick={() => handleImageDelete('preop', img.id)}
+                            className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {caseData.images?.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">Procedure Images</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {caseData.images.map((img: any, i: number) => (
+                      <div key={i} className="relative group">
+                        <a href={img.url} target="_blank" rel="noopener noreferrer" className="block aspect-square rounded-lg overflow-hidden border hover:ring-2 hover:ring-primary transition-all">
+                          <img src={img.url} alt={img.name} className="w-full h-full object-cover" />
+                        </a>
+                        {isOwner && caseData.verification_status === 'self' && (
+                          <button
+                            onClick={() => handleImageDelete('images', img.id)}
+                            className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {caseData.postop_images?.length > 0 && (
+                <div>
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">Postoperative Images</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {caseData.postop_images.map((img: any, i: number) => (
+                      <div key={i} className="relative group">
+                        <a href={img.url} target="_blank" rel="noopener noreferrer" className="block aspect-square rounded-lg overflow-hidden border hover:ring-2 hover:ring-primary transition-all">
+                          <img src={img.url} alt={img.name} className="w-full h-full object-cover" />
+                        </a>
+                        {isOwner && caseData.verification_status === 'self' && (
+                          <button
+                            onClick={() => handleImageDelete('postop', img.id)}
+                            className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Metadata */}
+        <div className="bg-gray-50 rounded-xl p-4 text-sm text-gray-500">
+          <p>Created: {new Date(caseData.created_at).toLocaleString()}</p>
+          {caseData.verified_at && (
+            <p>Verified: {new Date(caseData.verified_at).toLocaleString()}</p>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
