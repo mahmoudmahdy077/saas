@@ -1,0 +1,14 @@
+Starting project at G:\saas\medlog\mobile
+env: load .env
+env: export EXPO_PUBLIC_SUPABASE_URL EXPO_PUBLIC_SUPABASE_ANON_KEY
+Metro is running in CI mode, reloads are disabled. Remove CI=true to enable watch mode.
+Starting Metro Bundler
+warning: Bundler cache is empty, rebuilding (this may take a minute)
+The following packages should be updated for best compatibility with the installed expo version:
+  expo-local-authentication@14.0.1 - expected version: ~13.8.0
+  expo-secure-store@12.0.0 - expected version: ~12.8.1
+  react-native-svg@15.15.3 - expected version: 14.1.0
+  babel-preset-expo@55.0.10 - expected version: ^10.0.0
+Your project may not work correctly until you install the correct versions of the packages.
+Waiting on http://localhost:8082
+Logs for your project will appear below.
