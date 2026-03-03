@@ -21,6 +21,22 @@ async function getUser(request: NextRequest) {
   return user
 }
 
+function validateColumnName(columnName: string): boolean {
+  const allowedColumns = ['images', 'preop_images', 'postop_images']
+  return allowedColumns.includes(columnName)
+}
+
+function sanitizeFileName(fileName: string): string {
+  const baseName = path.basename(fileName, path.extname(fileName))
+  const sanitized = baseName.replace(/[^a-zA-Z0-9_-]/g, '_')
+  return sanitized.substring(0, 50)
+}
+
+function validateUUID(id: string): boolean {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+  return uuidRegex.test(id)
+}
+
 export async function POST(request: NextRequest) {
   const user = await getUser(request)
   if (!user) {
@@ -30,14 +46,18 @@ export async function POST(request: NextRequest) {
   const formData = await request.formData()
   const file = formData.get('file') as File
   const caseId = formData.get('caseId') as string
-  const imageType = formData.get('imageType') as string || 'images' // images, preop, postop
+  const imageType = formData.get('imageType') as string || 'images'
 
   if (!file) {
     return NextResponse.json({ error: 'No file provided' }, { status: 400 })
   }
 
-  if (!caseId) {
-    return NextResponse.json({ error: 'Case ID required' }, { status: 400 })
+  if (!caseId || !validateUUID(caseId)) {
+    return NextResponse.json({ error: 'Invalid Case ID' }, { status: 400 })
+  }
+
+  if (!['images', 'preop', 'postop'].includes(imageType)) {
+    return NextResponse.json({ error: 'Invalid image type' }, { status: 400 })
   }
 
   // Verify user owns the case
@@ -54,10 +74,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Not authorized' }, { status: 403 })
   }
 
-  // Validate file type
+  // Validate file type - strict allowlist
   const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+  const allowedExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif']
+  
   if (!allowedTypes.includes(file.type)) {
     return NextResponse.json({ error: 'Invalid file type. Allowed: JPEG, PNG, WebP, GIF' }, { status: 400 })
+  }
+
+  const fileExt = path.extname(file.name).toLowerCase()
+  if (!allowedExtensions.includes(fileExt)) {
+    return NextResponse.json({ error: 'Invalid file extension' }, { status: 400 })
   }
 
   // Validate file size (max 10MB)
@@ -66,9 +93,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    // Generate unique filename
-    const ext = path.extname(file.name)
-    const fileName = `${uuidv4()}${ext}`
+    // Generate unique filename with sanitization
+    const sanitizedName = sanitizeFileName(file.name)
+    const ext = fileExt
+    const fileName = `${uuidv4()}_${sanitizedName}${ext}`
     const folder = imageType === 'preop' ? 'preop' : imageType === 'postop' ? 'postop' : 'general'
     const storagePath = `${user.id}/${caseId}/${folder}/${fileName}`
 
@@ -79,7 +107,6 @@ export async function POST(request: NextRequest) {
     // Upload to MinIO directly
     const minioEndpoint = process.env.MINIO_ENDPOINT || 'storage'
     const minioPort = parseInt(process.env.MINIO_PORT || '9000')
-    const minioUseSSL = process.env.MINIO_USE_SSL === 'true'
     const minioAccessKey = process.env.MINIO_USER || 'medlog'
     const minioSecretKey = process.env.MINIO_PASSWORD || 'medlog2024'
 
@@ -109,10 +136,13 @@ export async function POST(request: NextRequest) {
     // Get public URL
     const publicUrl = `http://${minioEndpoint}:${minioPort}/${bucketName}/${storagePath}`
 
+    // Sanitize original filename before storing
+    const storedFileName = sanitizeFileName(file.name) + ext
+    
     // Save to database
     const imageRecord = {
       id: uuidv4(),
-      name: file.name,
+      name: storedFileName,
       path: storagePath,
       url: publicUrl,
       size: file.size,
@@ -120,9 +150,14 @@ export async function POST(request: NextRequest) {
       uploadedAt: new Date().toISOString()
     }
 
-    // Update case record
+    // Validate column name to prevent SQL injection
     const columnName = imageType === 'preop' ? 'preop_images' : imageType === 'postop' ? 'postop_images' : 'images'
     
+    if (!validateColumnName(columnName)) {
+      return NextResponse.json({ error: 'Invalid column' }, { status: 400 })
+    }
+    
+    // Use parameterized query with validated column
     await pool.query(`
       UPDATE cases 
       SET ${columnName} = COALESCE(${columnName}, '[]'::jsonb) || $1::jsonb,
@@ -137,7 +172,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Upload error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
   }
 }
 
@@ -156,10 +191,23 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ error: 'Case ID and Image ID required' }, { status: 400 })
   }
 
+  if (!validateUUID(caseId) || !validateUUID(imageId)) {
+    return NextResponse.json({ error: 'Invalid ID format' }, { status: 400 })
+  }
+
+  if (!['images', 'preop', 'postop'].includes(imageType)) {
+    return NextResponse.json({ error: 'Invalid image type' }, { status: 400 })
+  }
+
+  // Validate column name to prevent SQL injection
+  const columnName = imageType === 'preop' ? 'preop_images' : imageType === 'postop' ? 'postop_images' : 'images'
+  
+  if (!validateColumnName(columnName)) {
+    return NextResponse.json({ error: 'Invalid column' }, { status: 400 })
+  }
+
   try {
     // Get current images
-    const columnName = imageType === 'preop' ? 'preop_images' : imageType === 'postop' ? 'postop_images' : 'images'
-    
     const result = await pool.query(
       `SELECT user_id, ${columnName} as images FROM cases WHERE id = $1`,
       [caseId]
@@ -225,6 +273,6 @@ export async function DELETE(request: NextRequest) {
 
   } catch (error: any) {
     console.error('Delete error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Delete failed' }, { status: 500 })
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { getLocalDate, getLocalYesterday } from '@/lib/date-utils'
+import { stripXSS } from '@/lib/security'
 
 export async function GET(request: NextRequest) {
   try {
@@ -130,6 +131,12 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const sanitizedNotes = notes ? stripXSS(String(notes)) : ''
+    const sanitizedDiagnosis = diagnosis ? stripXSS(String(diagnosis)) : ''
+    const sanitizedComplications = Array.isArray(complications) 
+      ? complications.map(c => stripXSS(String(c)))
+      : []
+
     const { data: caseData, error } = await supabase.from('cases').insert({
       user_id: user.id,
       date,
@@ -138,9 +145,9 @@ export async function POST(request: NextRequest) {
       subcategory,
       role,
       patient_demographics: patient_demographics || { age: 0, gender: 'prefer-not-to-say' },
-      diagnosis: diagnosis || '',
-      complications: complications || [],
-      notes: notes || '',
+      diagnosis: sanitizedDiagnosis,
+      complications: sanitizedComplications,
+      notes: sanitizedNotes,
       custom_fields: custom_fields || {},
       verification_status: 'self',
     }).select().single()

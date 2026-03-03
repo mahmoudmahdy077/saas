@@ -1,0 +1,2 @@
+CommandError: Unexpected: --legacy-peer-deps
+Did you mean: npx expo install react-native-web react-dom @expo/metro-runtime -- --legacy-peer-deps

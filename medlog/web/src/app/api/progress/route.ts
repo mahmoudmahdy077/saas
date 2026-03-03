@@ -19,6 +19,26 @@ async function getUser(request: NextRequest) {
   return user
 }
 
+async function checkInstitutionAccess(userId: string, targetResidentId: string): Promise<boolean> {
+  const profileResult = await pool.query(`
+    SELECT p.institution_id as user_inst, p.role as user_role,
+           p2.institution_id as target_inst
+    FROM public.profiles p
+    JOIN public.profiles p2 ON p2.id = $2
+    WHERE p.id = $1
+  `, [userId, targetResidentId])
+  
+  if (profileResult.rows.length === 0) return false
+  
+  const { user_inst, user_role, target_inst } = profileResult.rows[0]
+  
+  if (['program_director', 'institution_admin', 'super_admin'].includes(user_role)) {
+    return user_inst === target_inst
+  }
+  
+  return false
+}
+
 export async function GET(request: NextRequest) {
   const user = await getUser(request)
   if (!user) {
@@ -98,6 +118,30 @@ export async function GET(request: NextRequest) {
     // Get resident progress (for PD/admin)
     if (action === 'resident' && searchParams.get('residentId')) {
       const residentId = searchParams.get('residentId')
+
+      // Check if user has permission to view resident progress
+      const profileResult = await pool.query(
+        'SELECT role, institution_id FROM public.profiles WHERE id = $1',
+        [user.id]
+      )
+      const userRole = profileResult.rows[0]?.role
+      const userInstitutionId = profileResult.rows[0]?.institution_id
+
+      // Only PD, admin, or super_admin can view other residents' progress
+      if (!['program_director', 'institution_admin', 'super_admin'].includes(userRole)) {
+        return NextResponse.json({ error: 'Forbidden - insufficient permissions' }, { status: 403 })
+      }
+
+      // Verify resident is in same institution
+      const residentProfileResult = await pool.query(
+        'SELECT institution_id FROM public.profiles WHERE id = $1',
+        [residentId]
+      )
+      const residentInstitutionId = residentProfileResult.rows[0]?.institution_id
+
+      if (userRole !== 'super_admin' && userInstitutionId !== residentInstitutionId) {
+        return NextResponse.json({ error: 'Forbidden - can only view residents in your institution' }, { status: 403 })
+      }
 
       const result = await pool.query(`
         SELECT 

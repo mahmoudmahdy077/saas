@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, ScrollView } from 'react-native'
 import { useRouter } from 'expo-router'
-import { supabase } from '../../lib/supabase'
+import { useAuthStore } from '../../../lib/stores/authStore'
+import { supabase } from '../../../lib/stores/authStore'
 
 const specialties = [
   { id: 'general-surgery', name: 'General Surgery' },
@@ -18,13 +19,23 @@ const specialties = [
 
 export default function RegisterScreen() {
   const router = useRouter()
+  const { signUp, loading } = useAuthStore()
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     fullName: '',
     specialty: '',
   })
-  const [loading, setLoading] = useState(false)
+  const [specialtyList, setSpecialtyList] = useState<{ id: string; name: string }[]>([])
+
+  useEffect(() => {
+    loadSpecialties()
+  }, [])
+
+  const loadSpecialties = async () => {
+    const { data } = await supabase.from('specialties').select('id, name')
+    if (data) setSpecialtyList(data)
+  }
 
   const handleRegister = async () => {
     const { email, password, fullName, specialty } = formData
@@ -39,39 +50,14 @@ export default function RegisterScreen() {
       return
     }
 
-    setLoading(true)
-    
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { full_name: fullName } },
-    })
+    const { error } = await signUp(email, password, fullName, specialty)
 
-    if (authError) {
-      Alert.alert('Error', authError.message)
-      setLoading(false)
-      return
+    if (error) {
+      Alert.alert('Error', error)
+    } else {
+      Alert.alert('Success', 'Account created! Please check your email to verify.')
+      router.replace('/(auth)/login')
     }
-
-    if (authData.user) {
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: authData.user.id,
-        email,
-        full_name: fullName,
-        role: 'resident',
-        specialty_id: specialty,
-        notification_settings: { reminder_enabled: true, reminder_time: '21:00', vacation_mode: false },
-      })
-
-      if (profileError) {
-        Alert.alert('Error', 'Failed to create profile')
-      } else {
-        Alert.alert('Success', 'Account created! Please check your email to verify.')
-        router.replace('/(auth)/login')
-      }
-    }
-    
-    setLoading(false)
   }
 
   return (
@@ -107,16 +93,9 @@ export default function RegisterScreen() {
           placeholderTextColor="#9ca3af"
         />
 
-        <TextInput
-          style={styles.input}
-          placeholder="Select Specialty"
-          value={specialties.find(s => s.id === formData.specialty)?.name || ''}
-          editable={false}
-          placeholderTextColor="#9ca3af"
-        />
-
+        <Text style={styles.label}>Select Specialty</Text>
         <View style={styles.specialtyGrid}>
-          {specialties.map((s) => (
+          {(specialtyList.length > 0 ? specialtyList : specialties).map((s) => (
             <TouchableOpacity
               key={s.id}
               style={[
@@ -165,7 +144,7 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f0f9ff',
+    backgroundColor: '#F9FAFB',
   },
   content: {
     padding: 24,
@@ -173,34 +152,44 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#0c4a6e',
+    fontFamily: 'PlusJakartaSans_700Bold',
+    color: '#0D0D12',
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
+    fontFamily: 'PlusJakartaSans_400Regular',
     color: '#64748b',
     textAlign: 'center',
     marginBottom: 24,
   },
   form: {
     backgroundColor: '#fff',
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowColor: '#4D66EB',
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowRadius: 24,
+    elevation: 8,
+  },
+  label: {
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans_500Medium',
+    color: '#374151',
+    marginBottom: 12,
   },
   input: {
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#F9FAFB',
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
+    fontFamily: 'PlusJakartaSans_400Regular',
     marginBottom: 16,
-    color: '#1f2937',
+    color: '#0D0D12',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
   },
   specialtyGrid: {
     flexDirection: 'row',
@@ -209,30 +198,36 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   specialtyChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: '#f3f4f6',
+    backgroundColor: '#F9FAFB',
     borderWidth: 1,
     borderColor: '#e5e7eb',
   },
   specialtyChipSelected: {
-    backgroundColor: '#0ea5e9',
-    borderColor: '#0ea5e9',
+    backgroundColor: '#4D66EB',
+    borderColor: '#4D66EB',
   },
   specialtyChipText: {
     fontSize: 14,
+    fontFamily: 'PlusJakartaSans_500Medium',
     color: '#64748b',
   },
   specialtyChipTextSelected: {
     color: '#fff',
   },
   button: {
-    backgroundColor: '#0ea5e9',
-    borderRadius: 12,
+    backgroundColor: '#4D66EB',
+    borderRadius: 14,
     padding: 16,
     alignItems: 'center',
     marginTop: 8,
+    shadowColor: '#4D66EB',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 6,
   },
   buttonDisabled: {
     opacity: 0.7,
@@ -240,7 +235,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: 'PlusJakartaSans_600SemiBold',
   },
   linkButton: {
     marginTop: 24,
@@ -249,9 +244,10 @@ const styles = StyleSheet.create({
   linkText: {
     color: '#64748b',
     fontSize: 14,
+    fontFamily: 'PlusJakartaSans_500Medium',
   },
   linkHighlight: {
-    color: '#0ea5e9',
-    fontWeight: '600',
+    color: '#4D66EB',
+    fontFamily: 'PlusJakartaSans_700Bold',
   },
 })

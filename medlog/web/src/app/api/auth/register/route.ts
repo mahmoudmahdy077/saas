@@ -1,14 +1,54 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { rateLimit, stripXSS } from '@/lib/security'
 
 export async function POST(request: NextRequest) {
+  const ip = request.headers.get('x-forwarded-for') || 
+             request.headers.get('x-real-ip') || 
+             'unknown'
+  
+  const rateLimitResult = rateLimit(`register:${ip}`, 3, 60000)
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      { error: 'Too many registration attempts. Please try again in 1 minute.' },
+      { status: 429 }
+    )
+  }
+
   try {
-    const { email, password, fullName, specialty, role = 'resident' } = await request.json()
+    const body = await request.json()
+    let { email, password, fullName, specialty, role = 'resident' } = body
 
     if (!email || !password || !fullName || !specialty) {
       return NextResponse.json(
         { error: 'All fields are required' },
+        { status: 400 }
+      )
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: 'Invalid email format' },
+        { status: 400 }
+      )
+    }
+
+    if (password.length < 8) {
+      return NextResponse.json(
+        { error: 'Password must be at least 8 characters' },
+        { status: 400 }
+      )
+    }
+
+    email = email.toLowerCase().trim()
+    fullName = stripXSS(fullName.trim())
+    specialty = stripXSS(specialty.trim())
+
+    if (fullName.length > 100 || email.length > 255) {
+      return NextResponse.json(
+        { error: 'Input too long' },
         { status: 400 }
       )
     }
@@ -84,7 +124,10 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
-      user: authData.user,
+      user: {
+        id: authData.user.id,
+        email: authData.user.email,
+      },
       message: 'Registration successful. Please check your email to verify.',
     })
   } catch (error) {

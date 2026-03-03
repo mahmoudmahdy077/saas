@@ -63,6 +63,33 @@
   - [x] Optimized bulk import performance (batch operations)
   - [x] Finalized Resident Management UI (Invite, Edit, Delete)
 
+#### Phase 6 (Weeks 11-12)
+- [x] **Stripe Integration**:
+  - [x] Created checkout API endpoint (`/api/subscription/checkout`)
+  - [x] Created webhook handler (`/api/subscription/webhook`)
+  - [x] Created customer portal endpoint (`/api/subscription/portal`)
+  - [x] Added billing section to settings page
+  - [x] Added `stripe_subscriptions` and `invoices` tables to schema
+
+#### Phase 7 (Weeks 13-14)
+- [x] **ACGME Compliance Reports**:
+  - [x] Created `/api/reports` API with 4 report types
+  - [x] Added case volume report (by resident, category, monthly trend)
+  - [x] Added case minimums compliance report (19 categories)
+  - [x] Added resident summary report (verification, streaks, quality)
+  - [x] Added milestone report (14 ACGME milestones)
+  - [x] Added ACGME compliance UI page (`/institution/compliance`)
+  - [x] Added `case_minimums`, `milestone_definitions`, `milestone_assessments`, `acgme_reports` tables
+  - [x] Seeded 19 General Surgery case minimums
+  - [x] Seeded 14 ACGME milestone definitions
+
+#### Phase 8 (Recent)
+  - [x] Invoice Generation: Added invoices API (`/api/invoices`), updated webhook to track invoices, added invoices tab in settings
+  - [x] Audit Logs: Created `audit_logs` table with RLS, API endpoint (`/api/audit-logs`), UI page (`/institution/audit-logs`)
+  - [x] Scheduled Reports: Added `report_schedules` table, API endpoint (`/api/institution/report-schedules`), cron endpoint, UI page
+  - [x] AI Configuration: Added `ai_usage` and `ai_rate_limits` tables, usage tracking API (`/api/ai/usage`), analytics page
+  - [x] Notifications: Added `notification_preferences` and `email_queue` tables, preferences API, enhanced notifications in settings
+
 ---
 
 ## What's Been Built
@@ -87,7 +114,18 @@
 - Specialty departments management
 - Custom template builder
 - Monthly/annual reports generation
-- Resident grading system
+- Billing & subscription management
+- ACGME compliance reports (case minimums, milestones)
+- Audit logs viewer
+- Report schedule management
+
+### New Features (Phase 8)
+- Invoice generation and viewing in settings
+- Audit logs for compliance tracking
+- Scheduled reports (daily/weekly/monthly/quarterly)
+- AI usage analytics and cost tracking
+- Notification preferences (email, push, digest frequency)
+- Email queue for scheduled notifications
 
 ### Mobile Application (Expo)
 - Login/Register screens

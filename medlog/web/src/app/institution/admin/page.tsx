@@ -294,6 +294,21 @@ export default function InstitutionAdminPage() {
             </Link>
 
             <Link
+              href="/institution/compliance"
+              className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:border-primary-200 transition-colors group"
+            >
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-orange-100 rounded-xl group-hover:bg-orange-200 transition-colors">
+                  <FileText className="h-6 w-6 text-orange-600" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900">ACGME Compliance</h3>
+                  <p className="text-sm text-gray-600">Case minimums & milestones</p>
+                </div>
+              </div>
+            </Link>
+
+            <Link
               href="/institution/templates"
               className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:border-primary-200 transition-colors group"
             >

@@ -1,13 +1,27 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native'
 import { useRouter } from 'expo-router'
-import { supabase } from '../../lib/supabase'
+import { useAuthStore } from '../../../lib/stores/authStore'
+import { isBiometricAvailable, getBiometricType, authenticateWithBiometric } from '../../../lib/utils/biometric'
 
 export default function LoginScreen() {
   const router = useRouter()
+  const { signIn, loading } = useAuthStore()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [biometricAvailable, setBiometricAvailable] = useState(false)
+  const [biometricType, setBiometricType] = useState('')
+
+  useEffect(() => {
+    checkBiometric()
+  }, [])
+
+  const checkBiometric = async () => {
+    const available = await isBiometricAvailable()
+    const type = await getBiometricType()
+    setBiometricAvailable(available)
+    setBiometricType(type)
+  }
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -15,18 +29,23 @@ export default function LoginScreen() {
       return
     }
 
-    setLoading(true)
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+    const { error } = await signIn(email, password)
 
     if (error) {
-      Alert.alert('Error', error.message)
-    } else {
-      router.replace('/(tabs)')
+      Alert.alert('Error', error)
     }
-    setLoading(false)
+  }
+
+  const handleBiometricLogin = async () => {
+    const result = await authenticateWithBiometric()
+    if (!result.success) {
+      Alert.alert('Error', result.error || 'Biometric authentication failed')
+      return
+    }
+    const { error } = await signIn(email, password)
+    if (error) {
+      Alert.alert('Error', error)
+    }
   }
 
   return (
@@ -65,6 +84,22 @@ export default function LoginScreen() {
             <Text style={styles.buttonText}>Sign In</Text>
           )}
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.forgotButton}
+          onPress={() => router.push('/(auth)/forgot-password')}
+        >
+          <Text style={styles.forgotText}>Forgot Password?</Text>
+        </TouchableOpacity>
+
+        {biometricAvailable && (
+          <TouchableOpacity
+            style={styles.biometricButton}
+            onPress={handleBiometricLogin}
+          >
+            <Text style={styles.biometricText}>Sign in with {biometricType}</Text>
+          </TouchableOpacity>
+        )}
 
         <TouchableOpacity
           style={styles.linkButton}
@@ -141,6 +176,27 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#fff',
     fontSize: 16,
+    fontFamily: 'PlusJakartaSans_600SemiBold',
+  },
+  forgotButton: {
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  forgotText: {
+    color: '#64748b',
+    fontSize: 14,
+    fontFamily: 'PlusJakartaSans_500Medium',
+  },
+  biometricButton: {
+    marginTop: 16,
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+  },
+  biometricText: {
+    color: '#4D66EB',
+    fontSize: 14,
     fontFamily: 'PlusJakartaSans_600SemiBold',
   },
   linkButton: {

@@ -66,7 +66,144 @@ CREATE TABLE public.institutions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   admin_id UUID REFERENCES auth.users(id),
+  logo_url TEXT,
+  primary_color TEXT DEFAULT '#2563eb',
+  secondary_color TEXT DEFAULT '#64748b',
+  accent_color TEXT DEFAULT '#10b981',
+  custom_css TEXT,
+  custom_domain TEXT,
+  white_label_enabled BOOLEAN DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- SAML Configuration
+CREATE TABLE IF NOT EXISTS public.saml_configurations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  institution_id UUID NOT NULL REFERENCES public.institutions(id) ON DELETE CASCADE,
+  idp_entity_id TEXT,
+  idp_sso_url TEXT,
+  idp_certificate TEXT,
+  sp_entity_id TEXT,
+  acs_url TEXT,
+  name_id_format TEXT DEFAULT 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
+  enabled BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- API Keys
+CREATE TABLE IF NOT EXISTS public.api_keys (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  key TEXT UNIQUE NOT NULL,
+  can_read BOOLEAN DEFAULT true,
+  can_write BOOLEAN DEFAULT false,
+  is_active BOOLEAN DEFAULT true,
+  last_used_at TIMESTAMP WITH TIME ZONE,
+  expires_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX idx_api_keys_key ON public.api_keys(key);
+CREATE INDEX idx_api_keys_user ON public.api_keys(user_id);
+
+-- Webhooks
+CREATE TABLE IF NOT EXISTS public.webhooks (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  institution_id UUID NOT NULL REFERENCES public.institutions(id) ON DELETE CASCADE,
+  url TEXT NOT NULL,
+  events JSONB NOT NULL DEFAULT '[]',
+  secret TEXT,
+  is_active BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Portfolios
+CREATE TABLE IF NOT EXISTS public.portfolios (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  is_public BOOLEAN DEFAULT false,
+  share_token TEXT UNIQUE,
+  title TEXT,
+  bio TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Portfolio Publications/Conferences
+CREATE TABLE IF NOT EXISTS public.portfolio_publications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  portfolio_id UUID NOT NULL REFERENCES public.portfolios(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  type TEXT CHECK (type IN ('publication', 'presentation', 'award', 'research')),
+  journal TEXT,
+  date DATE,
+  description TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Reference Letters
+CREATE TABLE IF NOT EXISTS public.reference_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  resident_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  requester_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  recipient_email TEXT NOT NULL,
+  recipient_name TEXT,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'submitted', 'declined')),
+  letter_content TEXT,
+  submitted_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- OAuth Applications
+CREATE TABLE IF NOT EXISTS public.oauth_applications (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  institution_id UUID REFERENCES public.institutions(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  client_id TEXT UNIQUE NOT NULL,
+  client_secret TEXT NOT NULL,
+  redirect_uris JSONB NOT NULL DEFAULT '[]',
+  scopes JSONB NOT NULL DEFAULT '["read"]',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- OAuth Authorization Codes
+CREATE TABLE IF NOT EXISTS public.oauth_codes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  code TEXT UNIQUE NOT NULL,
+  client_id TEXT NOT NULL,
+  user_id UUID REFERENCES auth.users(id),
+  redirect_uri TEXT NOT NULL,
+  scope TEXT,
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- OAuth Access Tokens
+CREATE TABLE IF NOT EXISTS public.oauth_tokens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id TEXT NOT NULL,
+  user_id UUID REFERENCES auth.users(id),
+  access_token TEXT UNIQUE NOT NULL,
+  refresh_token TEXT UNIQUE,
+  scope TEXT,
+  expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Custom Dashboards
+CREATE TABLE IF NOT EXISTS public.dashboard_configs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  institution_id UUID REFERENCES public.institutions(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  widgets JSONB NOT NULL DEFAULT '[]',
+  layout JSONB NOT NULL DEFAULT '[]',
+  is_default BOOLEAN DEFAULT false,
+  created_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Specialties table
@@ -155,10 +292,41 @@ CREATE TABLE public.reports (
 CREATE TABLE public.notifications (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  type TEXT NOT NULL CHECK (type IN ('reminder', 'streak', 'achievement', 'gap_alert', 'verification')),
+  type TEXT NOT NULL CHECK (type IN ('reminder', 'streak', 'achievement', 'gap_alert', 'verification', 'milestone', 'subscription', 'system')),
   title TEXT NOT NULL,
   message TEXT NOT NULL,
   read BOOLEAN DEFAULT false,
+  data JSONB DEFAULT '{}',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Notification Preferences
+CREATE TABLE public.notification_preferences (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  email_enabled BOOLEAN DEFAULT true,
+  push_enabled BOOLEAN DEFAULT true,
+  reminder_enabled BOOLEAN DEFAULT true,
+  streak_alerts BOOLEAN DEFAULT true,
+  gap_alerts BOOLEAN DEFAULT true,
+  verification_reminders BOOLEAN DEFAULT true,
+  milestone_alerts BOOLEAN DEFAULT true,
+  subscription_alerts BOOLEAN DEFAULT true,
+  digest_frequency TEXT DEFAULT 'daily' CHECK (digest_frequency IN ('immediate', 'daily', 'weekly')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Email Queue for scheduled emails
+CREATE TABLE public.email_queue (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  email TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  body TEXT NOT NULL,
+  status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'sent', 'failed', 'cancelled')),
+  sent_at TIMESTAMP WITH TIME ZONE,
+  error_message TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -308,6 +476,22 @@ CREATE POLICY "Users can view own notifications" ON public.notifications
 CREATE POLICY "Users can update own notifications" ON public.notifications
   FOR UPDATE USING (auth.uid() = user_id);
 
+-- Notification Preferences policies
+CREATE POLICY "Users can manage own notification preferences" ON public.notification_preferences
+  FOR ALL USING (auth.uid() = user_id);
+
+-- Email Queue policies
+CREATE POLICY "Users can view own email queue" ON public.email_queue
+  FOR SELECT USING (user_id = auth.uid());
+
+CREATE POLICY "System can manage email queue" ON public.email_queue
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles 
+      WHERE id = auth.uid() AND role = 'super_admin'
+    )
+  );
+
 -- Trigger for verification safety
 CREATE OR REPLACE FUNCTION public.validate_case_verification()
 RETURNS TRIGGER AS $$
@@ -425,6 +609,39 @@ CREATE TABLE public.ai_providers (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- AI Usage Tracking
+CREATE TABLE public.ai_usage (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  institution_id UUID REFERENCES public.institutions(id) ON DELETE CASCADE,
+  provider TEXT NOT NULL,
+  model TEXT,
+  prompt_tokens INTEGER DEFAULT 0,
+  completion_tokens INTEGER DEFAULT 0,
+  total_tokens INTEGER DEFAULT 0,
+  cost_usd DECIMAL(10,6) DEFAULT 0,
+  latency_ms INTEGER,
+  action_type TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX idx_ai_usage_user_id ON public.ai_usage(user_id);
+CREATE INDEX idx_ai_usage_institution_id ON public.ai_usage(institution_id);
+CREATE INDEX idx_ai_usage_created_at ON public.ai_usage(created_at DESC);
+
+-- AI Rate Limits
+CREATE TABLE public.ai_rate_limits (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  institution_id UUID NOT NULL REFERENCES public.institutions(id) ON DELETE CASCADE,
+  daily_limit INTEGER DEFAULT 100,
+  monthly_limit INTEGER DEFAULT 1000,
+  current_daily_usage INTEGER DEFAULT 0,
+  current_monthly_usage INTEGER DEFAULT 0,
+  last_reset_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- User Bans
 CREATE TABLE public.user_bans (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -483,6 +700,468 @@ CREATE TABLE public.institution_subscriptions (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Stripe Subscriptions (mirrors Stripe data)
+CREATE TABLE public.stripe_subscriptions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  institution_id UUID REFERENCES public.institutions(id) ON DELETE CASCADE,
+  stripe_customer_id TEXT NOT NULL,
+  stripe_subscription_id TEXT UNIQUE NOT NULL,
+  status TEXT DEFAULT 'active',
+  plan_name TEXT DEFAULT 'free',
+  current_period_start TIMESTAMP WITH TIME ZONE,
+  current_period_end TIMESTAMP WITH TIME ZONE,
+  cancel_at_period_end BOOLEAN DEFAULT false,
+  canceled_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Invoices
+CREATE TABLE public.invoices (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  institution_id UUID REFERENCES public.institutions(id) ON DELETE CASCADE,
+  stripe_invoice_id TEXT UNIQUE NOT NULL,
+  stripe_customer_id TEXT,
+  amount DECIMAL(10,2),
+  currency TEXT DEFAULT 'usd',
+  status TEXT DEFAULT 'pending',
+  paid_at TIMESTAMP WITH TIME ZONE,
+  invoice_data JSONB,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Audit Logs
+CREATE TABLE public.audit_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  institution_id UUID REFERENCES public.institutions(id) ON DELETE CASCADE,
+  action TEXT NOT NULL,
+  resource_type TEXT NOT NULL,
+  resource_id TEXT,
+  details JSONB DEFAULT '{}',
+  ip_address TEXT,
+  user_agent TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX idx_audit_logs_user_id ON public.audit_logs(user_id);
+CREATE INDEX idx_audit_logs_institution_id ON public.audit_logs(institution_id);
+CREATE INDEX idx_audit_logs_created_at ON public.audit_logs(created_at DESC);
+CREATE INDEX idx_audit_logs_action ON public.audit_logs(action);
+
+-- ACGME Case Minimums
+CREATE TABLE public.case_minimums (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  category TEXT NOT NULL,
+  subcategory TEXT,
+  minimum_required INTEGER NOT NULL,
+  description TEXT,
+  accreditation_type TEXT DEFAULT 'general_surgery',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- ACGME Milestones
+CREATE TABLE public.milestone_definitions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  milestone_number INTEGER NOT NULL,
+  competency_area TEXT NOT NULL,
+  level1_description TEXT,
+  level2_description TEXT,
+  level3_description TEXT,
+  level4_description TEXT,
+  level5_description TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Resident Milestone Assessments
+CREATE TABLE public.milestone_assessments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  resident_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  milestone_id UUID NOT NULL REFERENCES public.milestone_definitions(id) ON DELETE CASCADE,
+  assessor_id UUID REFERENCES auth.users(id),
+  level INTEGER CHECK (level BETWEEN 1 AND 5),
+  assessment_date DATE NOT NULL,
+  notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- ACGME Compliance Reports Cache
+CREATE TABLE public.acgme_reports (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  institution_id UUID NOT NULL REFERENCES public.institutions(id) ON DELETE CASCADE,
+  report_type TEXT NOT NULL CHECK (report_type IN ('case_volume', 'minimums', 'resident_summary', 'milestone')),
+  period_start DATE NOT NULL,
+  period_end DATE NOT NULL,
+  data JSONB NOT NULL,
+  generated_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Report Schedules
+CREATE TABLE public.report_schedules (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  institution_id UUID NOT NULL REFERENCES public.institutions(id) ON DELETE CASCADE,
+  report_type TEXT NOT NULL CHECK (report_type IN ('case_volume', 'minimums', 'resident_summary', 'milestone')),
+  frequency TEXT NOT NULL CHECK (frequency IN ('daily', 'weekly', 'monthly', 'quarterly')),
+  recipients JSONB NOT NULL DEFAULT '[]',
+  last_run_at TIMESTAMP WITH TIME ZONE,
+  next_run_at TIMESTAMP WITH TIME ZONE,
+  is_active BOOLEAN DEFAULT true,
+  created_by UUID REFERENCES auth.users(id),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- RLS for ACGME tables
+ALTER TABLE public.case_minimums ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.milestone_definitions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.milestone_assessments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.acgme_reports ENABLE ROW LEVEL SECURITY;
+
+-- Case Minimums: Everyone can view
+CREATE POLICY "Anyone can view case minimums" ON public.case_minimums
+  FOR SELECT USING (true);
+
+-- Milestone Definitions: Everyone can view
+CREATE POLICY "Anyone can view milestone definitions" ON public.milestone_definitions
+  FOR SELECT USING (true);
+
+-- Milestone Assessments: Resident and PD can view/manage
+CREATE POLICY "Resident and PD can manage milestone assessments" ON public.milestone_assessments
+  FOR ALL USING (
+    auth.uid() = resident_id
+    OR EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid() AND p.role IN ('program_director', 'institution_admin')
+    )
+  );
+
+-- ACGME Reports: PD and admins can manage
+CREATE POLICY "PD and admins can manage ACGME reports" ON public.acgme_reports
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid() 
+      AND p.institution_id = acgme_reports.institution_id
+      AND p.role IN ('program_director', 'institution_admin')
+    )
+  );
+
+-- RLS for Stripe tables
+ALTER TABLE public.stripe_subscriptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.invoices ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Institution members can view subscriptions" ON public.stripe_subscriptions
+  FOR SELECT USING (
+    institution_id IS NOT NULL AND institution_id IN (
+      SELECT institution_id FROM public.profiles WHERE id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Institution members can view invoices" ON public.invoices
+  FOR SELECT USING (
+    institution_id IS NOT NULL AND institution_id IN (
+      SELECT institution_id FROM public.profiles WHERE id = auth.uid()
+    )
+  );
+
+CREATE POLICY "Institution admins can view audit logs" ON public.audit_logs
+  FOR SELECT USING (
+    institution_id IN (
+      SELECT institution_id FROM public.profiles WHERE id = auth.uid() AND role IN ('program_director', 'institution_admin')
+    )
+  );
+
+CREATE POLICY "Users can view own audit logs" ON public.audit_logs
+  FOR SELECT USING (
+    user_id = auth.uid()
+  );
+
+-- Report Schedules RLS
+ALTER TABLE public.report_schedules ENABLE ROW LEVEL SECURITY;
+
+-- RLS for AI tables
+ALTER TABLE public.ai_providers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ai_usage ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ai_rate_limits ENABLE ROW LEVEL SECURITY;
+
+-- AI Providers: Only super admins can manage
+CREATE POLICY "Super admin can manage ai providers" ON public.ai_providers
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid() AND p.role = 'super_admin'
+    )
+  );
+
+-- AI Usage: Users can view own, PDs can view institution
+CREATE POLICY "Users can view own AI usage" ON public.ai_usage
+  FOR SELECT USING (
+    user_id = auth.uid()
+    OR institution_id IN (
+      SELECT institution_id FROM public.profiles WHERE id = auth.uid() AND role IN ('program_director', 'institution_admin')
+    )
+  );
+
+CREATE POLICY "Users can insert own AI usage" ON public.ai_usage
+  FOR INSERT WITH CHECK (
+    user_id = auth.uid()
+  );
+
+-- AI Rate Limits: Institution admins can manage
+CREATE POLICY "Institution admins can manage AI rate limits" ON public.ai_rate_limits
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid() 
+      AND p.institution_id = ai_rate_limits.institution_id
+      AND p.role IN ('program_director', 'institution_admin')
+    )
+  );
+
+CREATE POLICY "PD and admins can manage report schedules" ON public.report_schedules
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid() 
+      AND p.institution_id = report_schedules.institution_id
+      AND p.role IN ('program_director', 'institution_admin')
+    )
+  );
+
+-- RLS for api_keys (already enabled above)
+ALTER TABLE public.api_keys ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own api keys" ON public.api_keys
+  FOR SELECT USING (user_id = auth.uid());
+
+CREATE POLICY "Users can insert own api keys" ON public.api_keys
+  FOR INSERT WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "Users can update own api keys" ON public.api_keys
+  FOR UPDATE USING (user_id = auth.uid());
+
+CREATE POLICY "Users can delete own api keys" ON public.api_keys
+  FOR DELETE USING (user_id = auth.uid());
+
+-- RLS for webhooks (already enabled above)
+ALTER TABLE public.webhooks ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "PD and admins can manage webhooks" ON public.webhooks
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid() 
+      AND p.institution_id = webhooks.institution_id
+      AND p.role IN ('program_director', 'institution_admin')
+    )
+  );
+
+-- RLS for portfolios
+ALTER TABLE public.portfolios ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own portfolio" ON public.portfolios
+  FOR SELECT USING (user_id = auth.uid());
+
+CREATE POLICY "Users can insert own portfolio" ON public.portfolios
+  FOR INSERT WITH CHECK (user_id = auth.uid());
+
+CREATE POLICY "Users can update own portfolio" ON public.portfolios
+  FOR UPDATE USING (user_id = auth.uid());
+
+CREATE POLICY "Users can delete own portfolio" ON public.portfolios
+  FOR DELETE USING (user_id = auth.uid());
+
+CREATE POLICY "Anyone can view public portfolios" ON public.portfolios
+  FOR SELECT USING (is_public = true);
+
+-- RLS for oauth_applications
+ALTER TABLE public.oauth_applications ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admins can manage oauth apps" ON public.oauth_applications
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid() 
+      AND p.institution_id = oauth_applications.institution_id
+      AND p.role IN ('program_director', 'institution_admin')
+    )
+  );
+
+-- RLS for oauth_codes
+ALTER TABLE public.oauth_codes ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage own oauth codes" ON public.oauth_codes
+  FOR ALL USING (user_id = auth.uid());
+
+-- RLS for oauth_tokens
+ALTER TABLE public.oauth_tokens ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can manage own oauth tokens" ON public.oauth_tokens
+  FOR ALL USING (user_id = auth.uid());
+
+-- RLS for reference_requests
+ALTER TABLE public.reference_requests ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own reference requests" ON public.reference_requests
+  FOR SELECT USING (requester_id = auth.uid() OR reference_id = auth.uid());
+
+CREATE POLICY "Users can create reference requests" ON public.reference_requests
+  FOR INSERT WITH CHECK (requester_id = auth.uid());
+
+CREATE POLICY "Users can update own reference requests" ON public.reference_requests
+  FOR UPDATE USING (requester_id = auth.uid() OR reference_id = auth.uid());
+
+-- RLS for dashboard_configs
+ALTER TABLE public.dashboard_configs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Institution members can view dashboards" ON public.dashboard_configs
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid() 
+      AND p.institution_id = dashboard_configs.institution_id
+    )
+  );
+
+CREATE POLICY "PD and admins can manage dashboards" ON public.dashboard_configs
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid() 
+      AND p.institution_id = dashboard_configs.institution_id
+      AND p.role IN ('program_director', 'institution_admin')
+    )
+  );
+
+-- RLS for user_bans
+ALTER TABLE public.user_bans ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Admins can view user bans" ON public.user_bans
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid() 
+      AND p.role IN ('program_director', 'institution_admin', 'super_admin')
+    )
+  );
+
+CREATE POLICY "Super admins can manage user bans" ON public.user_bans
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid() 
+      AND p.role = 'super_admin'
+    )
+  );
+
+-- RLS for system_notifications
+ALTER TABLE public.system_notifications ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view system notifications" ON public.system_notifications
+  FOR SELECT USING (
+    target_roles IS NULL OR 
+    EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid() 
+      AND p.role = ANY(target_roles)
+    )
+  );
+
+CREATE POLICY "Super admins can manage system notifications" ON public.system_notifications
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid() 
+      AND p.role = 'super_admin'
+    )
+  );
+
+-- RLS for payment_settings
+ALTER TABLE public.payment_settings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Super admins can view payment settings" ON public.payment_settings
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid() 
+      AND p.role = 'super_admin'
+    )
+  );
+
+CREATE POLICY "Super admins can manage payment settings" ON public.payment_settings
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid() 
+      AND p.role = 'super_admin'
+    )
+  );
+
+-- RLS for institution_subscriptions
+ALTER TABLE public.institution_subscriptions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Institution members can view subscription" ON public.institution_subscriptions
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid() 
+      AND p.institution_id = institution_subscriptions.institution_id
+    )
+  );
+
+CREATE POLICY "Institution admins can manage subscription" ON public.institution_subscriptions
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid() 
+      AND p.institution_id = institution_subscriptions.institution_id
+      AND p.role IN ('program_director', 'institution_admin')
+    )
+  );
+
+-- RLS for integrations
+ALTER TABLE public.integrations ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Anyone can view integrations" ON public.integrations
+  FOR SELECT USING (true);
+
+-- RLS for integration_configs
+ALTER TABLE public.integration_configs ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Institution members can view integration configs" ON public.integration_configs
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid() 
+      AND p.institution_id = integration_configs.institution_id
+    )
+  );
+
+CREATE POLICY "Institution admins can manage integration configs" ON public.integration_configs
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid() 
+      AND p.institution_id = integration_configs.institution_id
+      AND p.role IN ('program_director', 'institution_admin')
+    )
+  );
+
+-- RLS for saml_configurations
+ALTER TABLE public.saml_configurations ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Institution admins can manage SAML" ON public.saml_configurations
+  FOR ALL USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid() 
+      AND p.institution_id = saml_configurations.institution_id
+      AND p.role IN ('program_director', 'institution_admin')
+    )
+  );
+
 -- Insert default website settings
 INSERT INTO public.website_settings (key, value, description) VALUES
 ('site_name', '"MedLog"', 'Website name'),
@@ -502,3 +1181,76 @@ INSERT INTO public.ai_providers (name, is_active, is_default, model) VALUES
 -- Insert default payment settings
 INSERT INTO public.payment_settings (provider, is_active) VALUES
 ('stripe', false);
+
+-- Insert ACGME Case Minimums (General Surgery - 19 categories)
+INSERT INTO public.case_minimums (category, minimum_required, description) VALUES
+('Cardiothoracic', 40, 'Major cases involving heart and lungs'),
+('Vascular', 40, 'Major vascular procedures'),
+('Colorectal', 30, 'Colorectal surgery procedures'),
+('Hernia', 40, 'Inguinal, femoral, and abdominal hernias'),
+('Laparoscopic', 75, 'Minimally invasive procedures'),
+('Endocrine', 10, 'Thyroid, parathyroid, adrenal'),
+('Breast', 25, 'Breast surgery procedures'),
+('Skin and Soft Tissue', 25, 'Skin, soft tissue, and melanoma'),
+('Trauma', 35, 'Emergency trauma procedures'),
+('Burns', 10, 'Burn treatment procedures'),
+('Pediatric', 20, 'Pediatric surgery procedures'),
+('Surgical Oncology', 25, 'Oncologic surgical procedures'),
+('Gastrointestinal', 50, 'GI tract procedures'),
+('Hepatobiliary', 20, 'Liver, gallbladder, pancreas'),
+('Renal', 15, 'Kidney and urinary tract'),
+('Obstetrics', 10, 'Obstetric surgical procedures'),
+('Gynecologic', 10, 'Gynecologic surgical procedures'),
+('Basic Laparoscopic', 50, 'Basic laparoscopic skills'),
+('Open Abdominal', 60, 'Open abdominal procedures');
+
+-- Insert ACGME Milestones (14 Competency Areas)
+INSERT INTO public.milestone_definitions (milestone_number, competency_area, level1_description, level2_description, level3_description, level4_description, level5_description) VALUES
+(1, 'Patient Care', 'Incomplete history and physical', 'Complete history and physical', 'Develops care plans', 'Independently manages patients', 'Exemplary patient care'),
+(2, 'Medical Knowledge', 'Limited medical knowledge', 'Basic medical knowledge', 'Applies knowledge to patient care', 'Advanced knowledge application', 'Expert medical knowledge'),
+(3, 'Practice-Based Learning', 'Unable to identify learning needs', 'Identifies learning needs', 'Uses evidence-based practice', 'Leads quality improvement', 'Creates new knowledge'),
+(4, 'Interpersonal Skills', 'Difficult to communicate', 'Basic communication', 'Effective communication', 'Excellent communicator', 'Master communicator'),
+(5, 'Professionalism', 'Unprofessional behavior', 'Minimal professionalism', 'Professional behavior', 'Role model for professionalism', 'Leads professionalism'),
+(6, 'Systems-Based Practice', 'Unaware of healthcare systems', 'Basic systems knowledge', 'Navigates systems effectively', 'Optimizes system use', 'Health system leader'),
+(7, 'Technical Skills', 'Unable to perform procedures', 'Basic technical skills', 'Competent procedures', 'Independent procedures', 'Expert technical skills'),
+(8, 'Leadership', 'No leadership skills', 'Emerging leadership', 'Effective leader', 'Strong leader', 'Exceptional leader'),
+(9, 'Scholarly Activity', 'No scholarly activity', 'Minimal scholarly activity', 'Active in scholarly work', 'Produces scholarly work', 'National reputation'),
+(10, 'Teaching', 'Unable to teach', 'Basic teaching', 'Effective teacher', 'Excellent teacher', 'Master teacher'),
+(11, 'Research', 'No research experience', 'Participates in research', 'Conducts research', 'Independent research', 'Research leader'),
+(12, 'Quality Improvement', 'No QI experience', 'Participates in QI', 'Leads QI projects', 'Sustained QI work', 'QI expert'),
+(13, 'Patient Safety', 'Unaware of safety', 'Basic safety knowledge', 'Implements safety', 'Leads safety initiatives', 'Safety expert'),
+(14, 'Professional Development', 'No development plan', 'Has development plan', 'Active development', 'Exceeds expectations', 'Career leader');
+
+-- Integration Marketplace tables
+CREATE TABLE IF NOT EXISTS public.integrations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  slug TEXT NOT NULL UNIQUE,
+  description TEXT,
+  logo_url TEXT,
+  category TEXT NOT NULL CHECK (category IN ('erp', 'lms', 'hris', 'calendar', 'messaging', 'analytics', 'storage', 'other')),
+  provider TEXT NOT NULL,
+  website_url TEXT,
+  documentation_url TEXT,
+  api_base_url TEXT,
+  auth_type TEXT NOT NULL CHECK (auth_type IN ('oauth2', 'apikey', 'basic', 'custom')),
+  is_verified BOOLEAN DEFAULT false,
+  is_featured BOOLEAN DEFAULT false,
+  pricing_model TEXT CHECK (pricing_model IN ('free', 'paid', 'subscription')),
+  monthly_cost DECIMAL(10,2),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.integration_configs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  institution_id UUID REFERENCES public.institutions(id) ON DELETE CASCADE,
+  integration_id UUID REFERENCES public.integrations(id) ON DELETE CASCADE,
+  config JSONB NOT NULL DEFAULT '{}',
+  auth_credentials JSONB,
+  is_active BOOLEAN DEFAULT false,
+  last_sync_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(institution_id, integration_id)
+);

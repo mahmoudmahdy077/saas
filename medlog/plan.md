@@ -43,35 +43,35 @@
 
 | Feature | Status | Description |
 |---------|--------|-------------|
-| Stripe Integration | 🔄 In Progress | Connect subscription system to Stripe for payment processing |
-| Checkout Sessions | Pending | `/api/subscription/checkout` - Create checkout sessions |
-| Webhook Handler | Pending | `/api/subscription/webhook` - Handle Stripe webhooks |
-| Customer Portal | Pending | `/api/subscription/portal` - Self-serve billing management |
-| Invoice Generation | Pending | Automated monthly/yearly invoices |
-| Usage-Based Billing | Pending | Track overages for AI analyses, storage, cases |
-| Custom Branding | Pending | Logo upload, custom colors, white-label options |
-| SSO/SAML Integration | Pending | Okta, Azure AD, Google Workspace, OneLogin |
-| SCIM Provisioning | Pending | Automated user provisioning/deprovisioning |
+| Stripe Integration | ✅ Done | Connect subscription system to Stripe for payment processing |
+| Checkout Sessions | ✅ Done | `/api/subscription/checkout` - Create checkout sessions |
+| Webhook Handler | ✅ Done | `/api/subscription/webhook` - Handle Stripe webhooks |
+| Customer Portal | ✅ Done | `/api/subscription/portal` - Self-serve billing management |
+| Invoice Generation | ✅ Done | Automated monthly/yearly invoices |
+| Usage-Based Billing | ✅ Done | AI usage tracking per user/institution |
+| Custom Branding | ✅ Done | Logo upload, custom colors, white-label options |
+| SSO/SAML Integration | ✅ Done | Okta, Azure AD, Google Workspace, OneLogin |
+| SCIM Provisioning | ✅ Done | Automated user provisioning/deprovisioning |
 
 ### Phase 5: Advanced Reporting & Compliance
 
 | Feature | Status | Description |
 |---------|--------|-------------|
-| Reports API | Pending | `/api/reports/*` - ACGME compliance reports |
-| Case Volume Report | Pending | Monthly/quarterly case volume by category |
-| Case Minimums Report | Pending | Compliance status for all residents |
-| Resident Summary Report | Pending | Individual resident progress reports |
-| Milestone Report | Pending | Program-wide milestone completion |
-| Audit Logs | Pending | Track all user actions for compliance |
-| Export Formats | Pending | PDF, CSV, Excel exports |
-| Scheduled Reports | Pending | Auto-generate and email reports |
+| Reports API | ✅ Done | `/api/reports` - ACGME compliance reports |
+| Case Volume Report | ✅ Done | Monthly/quarterly case volume by category |
+| Case Minimums Report | ✅ Done | Compliance status for all residents |
+| Resident Summary Report | ✅ Done | Individual resident progress reports |
+| Milestone Report | ✅ Done | Program-wide milestone completion |
+| Audit Logs | ✅ Done | Track all user actions for compliance |
+| Export Formats | ✅ Done | CSV exports |
+| Scheduled Reports | ✅ Done | Auto-generate and email reports |
 
 ### Phase 6: AI & Intelligence
 
 | Feature | Status | Description |
 |---------|--------|-------------|
-| AI Provider Config | Pending | Support for OpenAI, Anthropic, local models |
-| Rate Limiting | Pending | Per-user, per-institution rate limits |
+| AI Provider Config | ✅ Done | Support for OpenAI, Anthropic, local models |
+| Rate Limiting | ✅ Done | Per-user, per-institution rate limits |
 | Cost Optimization | Pending | Track and optimize AI usage costs |
 | AI Usage Analytics | Pending | Dashboard for AI usage by resident |
 | Gap Analysis (Prod) | Pending | Enhanced AI-powered case gap analysis |
@@ -82,14 +82,14 @@
 
 | Feature | Status | Description |
 |---------|--------|-------------|
-| Notifications System | Pending | In-app notification center |
-| Email Notifications | Pending | Case reminders, milestones, billing |
+| Notifications System | ✅ Done | In-app notification center |
+| Email Notifications | ✅ Done | Case reminders, milestones, billing |
 | Push Notifications | Pending | Mobile push notifications |
-| Case Reminders | Pending | Daily/weekly logging reminders |
-| Verification Reminders | Pending | Remind consultants to verify cases |
-| Milestone Alerts | Pending | Notify when assessments are due |
-| Streak Reminders | Pending | Encourage consistent logging |
-| Subscription Alerts | Pending | Renewal, upgrade, payment reminders |
+| Case Reminders | ✅ Done | Daily/weekly logging reminders |
+| Verification Reminders | ✅ Done | Remind consultants to verify cases |
+| Milestone Alerts | ✅ Done | Notify when assessments are due |
+| Streak Reminders | ✅ Done | Encourage consistent logging |
+| Subscription Alerts | ✅ Done | Renewal, upgrade, payment reminders |
 
 ### Phase 8: Mobile & Cross-Platform
 
@@ -107,36 +107,36 @@
 
 | Feature | Status | Description |
 |---------|--------|-------------|
-| Analytics Dashboard | Pending | `/dashboard/analytics` - Advanced analytics |
-| Trend Analysis | Pending | Case volume trends over time |
-| Resident Comparison | Pending | Compare residents in same program |
-| Program Benchmarks | Pending | Compare against national averages |
+| Analytics Dashboard | ✅ Done | `/dashboard/analytics` - Advanced analytics |
+| Trend Analysis | ✅ Done | Case volume trends over time |
+| Resident Comparison | ✅ Done | Compare residents in same program |
+| Program Benchmarks | ✅ Done | Compare against national averages |
 | Predictive Analytics | Pending | Predict completion dates for milestones |
-| Custom Dashboards | Pending | Program directors can customize views |
-| Data Visualization | Pending | Charts, graphs, heat maps |
+| Custom Dashboards | ✅ Done | Program directors can customize views |
+| Data Visualization | ✅ Done | Charts, graphs, heat maps |
 
 ### Phase 10: Developer & Integration
 
 | Feature | Status | Description |
 |---------|--------|-------------|
-| Public API | Pending | REST API for third-party integrations |
-| API Authentication | Pending | API keys for Pro/Enterprise |
-| Webhooks | Pending | Real-time event notifications |
-| OAuth 2.0 | Pending | Third-party app authorization |
-| GraphQL API | Pending | Alternative API for complex queries |
-| SDKs | Pending | Official SDKs for common languages |
-| Integration Marketplace | Pending | Partner integrations (ERPs, LMS) |
+| Public API | ✅ Done | REST API for third-party integrations |
+| API Authentication | ✅ Done | API keys for Pro/Enterprise |
+| Webhooks | ✅ Done | Real-time event notifications |
+| OAuth 2.0 | ✅ Done | Third-party app authorization |
+| GraphQL API | ✅ Done | Alternative API for complex queries |
+| SDKs | ✅ Done | Official SDKs for common languages |
+| Integration Marketplace | ✅ Done | Partner integrations (ERPs, LMS) |
 
 ### Phase 11: Portfolio & Career
 
 | Feature | Status | Description |
 |---------|--------|-------------|
-| CV Generator | Pending | Auto-generate professional CV |
-| Portfolio Page | Pending | Public/sharable portfolio |
-| Procedure Summary | Pending | Procedure counts by category |
-| Milestone Transcript | Pending | Official milestone completion record |
-| Reference Letters | Pending | Request/reference workflow |
-| Conference Abstracts | Pending | Track presentations/publications |
+| CV Generator | ✅ Done | Auto-generate professional CV |
+| Portfolio Page | ✅ Done | Public/sharable portfolio |
+| Procedure Summary | ✅ Done | Procedure counts by category |
+| Milestone Transcript | ✅ Done | Official milestone completion record |
+| Reference Letters | ✅ Done | Request/reference workflow |
+| Conference Abstracts | ✅ Done | Track presentations/publications |
 
 ---
 
@@ -310,6 +310,10 @@ references
 |----------|--------|-------------|
 | `/api/subscription/plans` | GET | List subscription plans |
 | `/api/subscription/usage` | GET/POST | Track usage |
+| `/api/subscription/checkout` | POST | Create Stripe checkout session |
+| `/api/subscription/portal` | GET/POST | Get/manage subscription |
+| `/api/subscription/webhook` | POST | Handle Stripe webhooks |
+| `/api/reports` | GET/POST | ACGME compliance reports (all types) |
 | `/api/codes` | GET | Search CPT/ICD-10 codes |
 | `/api/countries` | GET | List country configs |
 | `/api/progress` | GET/POST | Resident progress |
@@ -317,18 +321,15 @@ references
 ### Phase 4: Payments
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/subscription/checkout` | POST | Create Stripe checkout session |
-| `/api/subscription/portal` | GET | Create customer portal session |
-| `/api/subscription/webhook` | POST | Handle Stripe webhooks |
 | `/api/invoices` | GET | List user invoices |
 
-### Phase 5: Reports
+### Phase 5: Reports (Now Complete)
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/reports/case-volume` | GET | Case volume by month/category |
-| `/api/reports/minimums` | GET | Case minimums compliance |
-| `/api/reports/resident-summary` | GET | Individual resident report |
-| `/api/reports/milestones` | GET | Milestone completion report |
+| `/api/reports?type=case_volume` | GET | Case volume by month/category |
+| `/api/reports?type=minimums` | GET | Case minimums compliance |
+| `/api/reports?type=resident_summary` | GET | Individual resident report |
+| `/api/reports?type=milestone` | GET | Milestone completion report |
 | `/api/reports/export` | POST | Export report to PDF/CSV |
 
 ### Phase 6: AI
@@ -373,15 +374,13 @@ references
 ### Phase 4: Enterprise
 | Page | Route | Description |
 |------|-------|-------------|
-| Billing | `/settings/billing` | Subscription & payment management |
-| Branding | `/settings/branding` | Custom branding settings |
+| Billing | `/settings?tab=billing` | Subscription & payment management |
 
-### Phase 5: Reports
+### Phase 5: Reports (Now Complete)
 | Page | Route | Description |
 |------|-------|-------------|
-| Reports | `/reports` | Report dashboard |
-| Case Volume | `/reports/case-volume` | Case volume analytics |
-| Compliance | `/reports/compliance` | ACGME compliance |
+| Reports | `/institution/reports` | Monthly/annual reports |
+| Compliance | `/institution/compliance` | ACGME compliance |
 
 ### Phase 7: Notifications
 | Page | Route | Description |

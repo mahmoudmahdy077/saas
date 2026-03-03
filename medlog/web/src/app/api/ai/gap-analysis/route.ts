@@ -1,8 +1,35 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
-export async function GET() {
+const rateLimitStore = new Map<string, { count: number; resetAt: number }>()
+
+function rateLimit(key: string, limit: number = 10, windowMs: number = 60000): boolean {
+  const now = Date.now()
+  const record = rateLimitStore.get(key)
+  
+  if (!record || now > record.resetAt) {
+    rateLimitStore.set(key, { count: 1, resetAt: now + windowMs })
+    return true
+  }
+  
+  if (record.count >= limit) {
+    return false
+  }
+  
+  record.count++
+  return true
+}
+
+export async function GET(request: NextRequest) {
+    const ip = request.headers.get('x-forwarded-for') || 
+               request.headers.get('x-real-ip') || 
+               'unknown'
+    
+    if (!rateLimit(`ai-gap:${ip}`)) {
+        return NextResponse.json({ error: 'Rate limit exceeded. Please try again later.' }, { status: 429 })
+    }
+
     try {
         const cookieStore = cookies()
         const supabase = createServerClient(

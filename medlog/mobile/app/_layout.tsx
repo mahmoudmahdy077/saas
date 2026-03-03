@@ -1,7 +1,7 @@
+import { useEffect } from 'react'
 import { Stack } from 'expo-router'
 import { View, ActivityIndicator, StyleSheet } from 'react-native'
-import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
+import { useAuthStore } from '../lib/stores/authStore'
 import {
   useFonts,
   PlusJakartaSans_400Regular,
@@ -11,10 +11,9 @@ import {
 } from '@expo-google-fonts/plus-jakarta-sans'
 
 export default function RootLayout() {
-  const [session, setSession] = useState(null)
-  const [loading, setLoading] = useState(true)
-
-  let [fontsLoaded] = useFonts({
+  const { user, profile, initialized } = useAuthStore()
+  
+  const [fontsLoaded] = useFonts({
     PlusJakartaSans_400Regular,
     PlusJakartaSans_500Medium,
     PlusJakartaSans_600SemiBold,
@@ -22,25 +21,32 @@ export default function RootLayout() {
   })
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setLoading(false)
-    })
-
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session)
-    })
-
-    return () => subscription.unsubscribe()
+    useAuthStore.getState().initialize()
   }, [])
 
-  if (loading || !fontsLoaded) {
+  if (!initialized || !fontsLoaded) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color="#4D66EB" />
       </View>
     )
   }
+
+  const isConsultant = profile?.role === 'consultant'
+  const isProgramDirector = profile?.role === 'program_director'
+  const isInstitutionAdmin = profile?.role === 'institution_admin'
+  const isSuperAdmin = profile?.role === 'super_admin'
+
+  const getRouteGroup = () => {
+    if (!user) return '(auth)'
+    if (isSuperAdmin) return '(super_admin)'
+    if (isInstitutionAdmin) return '(institution_admin)'
+    if (isProgramDirector) return '(program_director)'
+    if (isConsultant) return '(consultant)'
+    return '(main)' // resident
+  }
+
+  const routeGroup = getRouteGroup()
 
   return (
     <Stack
@@ -51,17 +57,10 @@ export default function RootLayout() {
         contentStyle: { backgroundColor: '#F9FAFB' }
       }}
     >
-      {!session ? (
-        <Stack.Screen
-          name="(auth)/login"
-          options={{ headerShown: false }}
-        />
-      ) : (
-        <Stack.Screen
-          name="(tabs)"
-          options={{ headerShown: false }}
-        />
-      )}
+      <Stack.Screen
+        name={routeGroup}
+        options={{ headerShown: false }}
+      />
     </Stack>
   )
 }
