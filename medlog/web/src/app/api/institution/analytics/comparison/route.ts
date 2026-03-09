@@ -1,3 +1,5 @@
+export const dynamic = 'force-dynamic'
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Pool } from 'pg'
@@ -38,7 +40,7 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const period = searchParams.get('period') || 'month'
-    
+
     let dateFilter = "created_at >= NOW() - INTERVAL '30 days'"
     if (period === 'quarter') {
       dateFilter = "created_at >= NOW() - INTERVAL '90 days'"
@@ -102,7 +104,7 @@ export async function GET(request: NextRequest) {
       const totalCases = parseInt(resident.total_cases) || 0
       const verifiedCases = parseInt(resident.verified_cases) || 0
       const categories = parseInt(resident.categories_logged) || 0
-      
+
       return {
         ...resident,
         total_cases: totalCases,
@@ -131,7 +133,7 @@ export async function GET(request: NextRequest) {
     comparison.forEach((c, i) => c.ranking.by_categories = i + 1)
 
     const categoryBreakdown: Record<string, Record<string, number>> = {}
-    categoryResult.forEach(row => {
+    categoryResult.rows.forEach(row => {
       if (!categoryBreakdown[row.resident_id]) {
         categoryBreakdown[row.resident_id] = {}
       }

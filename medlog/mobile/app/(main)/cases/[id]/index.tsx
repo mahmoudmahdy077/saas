@@ -15,6 +15,7 @@ interface Case {
   icd_code?: string
   notes?: string
   created_at: string
+  user_id?: string
   verified_by?: string
   verified_at?: string
 }

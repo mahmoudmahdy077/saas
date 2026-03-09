@@ -11,16 +11,16 @@ const rateLimitStore = new Map<string, { count: number; resetAt: number }>()
 function rateLimit(key: string, limit: number = 30, windowMs: number = 60000): boolean {
   const now = Date.now()
   const record = rateLimitStore.get(key)
-  
+
   if (!record || now > record.resetAt) {
     rateLimitStore.set(key, { count: 1, resetAt: now + windowMs })
     return true
   }
-  
+
   if (record.count >= limit) {
     return false
   }
-  
+
   record.count++
   return true
 }
@@ -155,15 +155,15 @@ const resolvers = {
     cases: async (_: any, args: { limit?: number; offset?: number; category?: string }, context: GraphQLContext) => {
       let query = 'SELECT * FROM public.cases WHERE institution_id = $1'
       const params: any[] = [context.institutionId]
-      
+
       if (args.category) {
         query += ` AND category = $${params.length + 1}`
         params.push(args.category)
       }
-      
+
       query += ` ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`
       params.push(args.limit || 50, args.offset || 0)
-      
+
       const result = await pool.query(query, params)
       return result.rows.map(c => ({
         id: c.id,
@@ -203,7 +203,7 @@ const resolvers = {
         FROM public.profiles p
         WHERE p.institution_id = $1 AND p.role = 'resident'
       `, [context.institutionId])
-      
+
       return result.rows.map(r => ({
         id: r.id,
         fullName: r.full_name,
@@ -274,7 +274,7 @@ const resolvers = {
         WHERE ma.resident_id = $1
         ORDER BY ma.assessment_date DESC
       `, [args.residentId])
-      
+
       return result.rows.map(m => ({
         id: m.id,
         residentId: m.resident_id,
@@ -329,7 +329,7 @@ const resolvers = {
         VALUES ($1, $2, $3, $4, CURRENT_DATE, $5)
         RETURNING *
       `, [args.residentId, args.milestoneId, context.userId, args.level, args.notes])
-      
+
       const m = result.rows[0]
       return {
         id: m.id,
@@ -346,12 +346,12 @@ const resolvers = {
 
 function parseQuery(query: string): any {
   const queryLower = query.toLowerCase()
-  
+
   if (queryLower.includes('mutation')) {
     const createMatch = query.match(/createCase\s*\(\s*input:\s*(\w+)\s*\{([^}]+)\}/)
     if (createMatch) {
       const inputFields: Record<string, string> = {}
-      const fieldMatches = createMatch[2].matchAll(/(\w+):\s*\$(\w+)/g)
+      const fieldMatches = Array.from(createMatch[2].matchAll(/(\w+):\s*\$(\w+)/g))
       for (const match of fieldMatches) {
         inputFields[match[1]] = match[2]
       }
@@ -362,15 +362,15 @@ function parseQuery(query: string): any {
   if (queryLower.includes('cases')) {
     return { type: 'query', operation: 'cases' }
   }
-  
+
   if (queryLower.includes('residents')) {
     return { type: 'query', operation: 'residents' }
   }
-  
+
   if (queryLower.includes('stats')) {
     return { type: 'query', operation: 'stats' }
   }
-  
+
   if (queryLower.includes('milestones')) {
     return { type: 'query', operation: 'milestones' }
   }
@@ -380,13 +380,13 @@ function parseQuery(query: string): any {
 
 function extractVariables(body: string): Record<string, any> {
   const variables: Record<string, any> = {}
-  
+
   const jsonMatch = body.match(/\"variables\"\s*:\s*(\{[^}]+\})/)
   if (jsonMatch) {
     try {
       const parsed = JSON.parse(jsonMatch[1].replace(/(\w+):/g, '"$1":'))
       Object.assign(variables, parsed)
-    } catch (e) {}
+    } catch (e) { }
   }
 
   return variables
@@ -398,10 +398,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ errors: [{ message: 'Unauthorized' }] }, { status: 401 })
   }
 
-  const ip = request.headers.get('x-forwarded-for') || 
-             request.headers.get('x-real-ip') || 
-             'unknown'
-  
+  const ip = request.headers.get('x-forwarded-for') ||
+    request.headers.get('x-real-ip') ||
+    'unknown'
+
   if (!rateLimit(`graphql:${ip}`)) {
     return NextResponse.json({ errors: [{ message: 'Rate limit exceeded' }] }, { status: 429 })
   }
@@ -431,13 +431,13 @@ export async function POST(request: NextRequest) {
     }
 
     const parsed = parseQuery(query)
-    
+
     if (!parsed) {
       return NextResponse.json({ errors: [{ message: 'Invalid or unsupported query' }] }, { status: 400 })
     }
 
     const sanitizedVariables = { ...variables }
-    
+
     if (sanitizedVariables.limit) {
       sanitizedVariables.limit = sanitizeLimit(sanitizedVariables.limit)
     }
@@ -456,9 +456,9 @@ export async function POST(request: NextRequest) {
     if (sanitizedVariables.input?.description) {
       sanitizedVariables.input.description = sanitizeString(sanitizedVariables.input.description)
     }
-    
+
     let result: any = null
-    
+
     if (parsed?.type === 'query') {
       const resolver = resolvers.Query[parsed.operation as keyof typeof resolvers.Query]
       if (resolver) {

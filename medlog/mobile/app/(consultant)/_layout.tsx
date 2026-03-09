@@ -25,7 +25,7 @@ export default function ConsultantLayout() {
       }}
     >
       <Tabs.Screen
-        name="dashboard"
+        name="dashboard/index"
         options={{
           title: 'Dashboard',
           tabBarLabel: 'Dashboard',
@@ -35,7 +35,7 @@ export default function ConsultantLayout() {
         }}
       />
       <Tabs.Screen
-        name="verify-cases"
+        name="verify-cases/index"
         options={{
           title: 'Verify Cases',
           tabBarLabel: 'Verify',
@@ -45,7 +45,7 @@ export default function ConsultantLayout() {
         }}
       />
       <Tabs.Screen
-        name="verified-cases"
+        name="verified-cases/index"
         options={{
           title: 'Verified',
           tabBarLabel: 'Verified',
@@ -55,7 +55,7 @@ export default function ConsultantLayout() {
         }}
       />
       <Tabs.Screen
-        name="../settings"
+        name="settings/index"
         options={{
           title: 'Settings',
           tabBarLabel: 'Settings',

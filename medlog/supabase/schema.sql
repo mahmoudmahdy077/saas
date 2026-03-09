@@ -329,24 +329,6 @@ CREATE TABLE public.email_queue (
   error_message TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-
--- Indexing for performance
-CREATE INDEX IF NOT EXISTS idx_profiles_institution ON public.profiles(institution_id);
-CREATE INDEX IF NOT EXISTS idx_profiles_specialty ON public.profiles(specialty_id);
-CREATE INDEX IF NOT EXISTS idx_cases_user ON public.cases(user_id);
-CREATE INDEX IF NOT EXISTS idx_cases_specialty ON public.cases(specialty_id);
-CREATE INDEX IF NOT EXISTS idx_cases_date ON public.cases(date);
-CREATE INDEX IF NOT EXISTS idx_share_links_token ON public.share_links(token);
-CREATE INDEX IF NOT EXISTS idx_invites_token ON public.invites(token);
-CREATE INDEX IF NOT EXISTS idx_reports_resident ON public.reports(resident_id);
-
--- RLS Policies
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.cases ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.institutions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.specialties ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.templates ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.share_links ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.reports ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.invites ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
@@ -357,8 +339,8 @@ CREATE POLICY "Users can view own profile" ON public.profiles
 
 CREATE POLICY "Institution staff can view resident profiles" ON public.profiles
   FOR SELECT USING (
-    (SELECT institution_id FROM public.profiles WHERE id = auth.uid()) = profiles.institution_id
-    AND (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('program_director', 'institution_admin')
+    get_auth_institution() = profiles.institution_id
+    AND get_auth_role() IN ('program_director', 'institution_admin')
   );
 
 CREATE POLICY "Users can update own profile" ON public.profiles

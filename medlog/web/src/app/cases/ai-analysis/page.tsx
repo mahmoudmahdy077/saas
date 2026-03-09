@@ -209,7 +209,7 @@ export default function AIAnalysisPage() {
                             <XAxis dataKey="name" tick={{ fontSize: 11 }} />
                             <YAxis />
                             <Tooltip
-                                formatter={(value: number) => [value, 'Cases']}
+                                formatter={(value) => [value ?? 0, 'Cases']}
                                 contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
                             />
                             <Bar dataKey="value" radius={[4, 4, 0, 0]}>

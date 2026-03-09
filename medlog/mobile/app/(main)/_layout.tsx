@@ -25,7 +25,7 @@ export default function MainLayout() {
       }}
     >
       <Tabs.Screen
-        name="dashboard"
+        name="dashboard/index"
         options={{
           title: 'Home',
           tabBarIcon: ({ color, size }) => (
@@ -34,7 +34,7 @@ export default function MainLayout() {
         }}
       />
       <Tabs.Screen
-        name="cases"
+        name="cases/index"
         options={{
           title: 'Cases',
           tabBarIcon: ({ color, size }) => (
@@ -43,7 +43,7 @@ export default function MainLayout() {
         }}
       />
       <Tabs.Screen
-        name="cases/new"
+        name="cases/new/index"
         options={{
           title: 'Add',
           tabBarIcon: ({ color, size }) => (
@@ -52,7 +52,7 @@ export default function MainLayout() {
         }}
       />
       <Tabs.Screen
-        name="progress"
+        name="progress/index"
         options={{
           title: 'Progress',
           tabBarIcon: ({ color, size }) => (
@@ -61,7 +61,7 @@ export default function MainLayout() {
         }}
       />
       <Tabs.Screen
-        name="reports"
+        name="reports/index"
         options={{
           title: 'Reports',
           tabBarIcon: ({ color, size }) => (
@@ -70,7 +70,7 @@ export default function MainLayout() {
         }}
       />
       <Tabs.Screen
-        name="portfolio"
+        name="portfolio/index"
         options={{
           title: 'Portfolio',
           tabBarIcon: ({ color, size }) => (
@@ -79,16 +79,16 @@ export default function MainLayout() {
         }}
       />
       <Tabs.Screen
-        name="references"
+        name="references/index"
         options={{
           title: 'Refs',
           tabBarIcon: ({ color, size }) => (
-            <MaterialCommunityIcons name="account-card-details" size={size} color={color} />
+            <MaterialCommunityIcons name="account-details" size={size} color={color} />
           ),
         }}
       />
       <Tabs.Screen
-        name="settings"
+        name="settings/index"
         options={{
           title: 'More',
           tabBarIcon: ({ color, size }) => (

@@ -56,12 +56,12 @@ export default function SettingsScreen() {
         <SettingItem 
           icon="account-edit" 
           title="Edit Profile" 
-          onPress={() => router.push('/(main)/settings/profile')}
+          onPress={() => router.push('/(main)/settings/profile' as any)}
         />
         <SettingItem 
           icon="lock-reset" 
           title="Change Password" 
-          onPress={() => router.push('/(main)/settings/password')}
+          onPress={() => router.push('/(main)/settings/password' as any)}
         />
         <SettingItem 
           icon="bell" 

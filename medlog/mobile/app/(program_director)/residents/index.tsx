@@ -51,7 +51,7 @@ export default function ResidentsScreen() {
         full_name: p.full_name,
         email: p.email,
         training_year: p.training_year,
-        specialty: p.specialties?.name || 'General',
+        specialty: (p.specialties as any)?.name || 'General',
         total_cases: total || 0,
         verified_cases: verified || 0,
       }

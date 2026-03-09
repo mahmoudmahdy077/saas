@@ -168,10 +168,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 20,
     padding: 24,
-    shadowColor: '#4D66EB',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
-    shadowRadius: 24,
+    boxShadow: '0px 8px 24px rgba(77, 102, 235, 0.1)',
     elevation: 8,
   },
   label: {
@@ -223,10 +220,7 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
     marginTop: 8,
-    shadowColor: '#4D66EB',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
+    boxShadow: '0px 4px 10px rgba(77, 102, 235, 0.3)',
     elevation: 6,
   },
   buttonDisabled: {

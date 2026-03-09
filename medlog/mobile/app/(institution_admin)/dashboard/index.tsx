@@ -67,7 +67,7 @@ export default function InstitutionAdminDashboardScreen() {
           <TouchableOpacity
             key={index}
             style={styles.menuCard}
-            onPress={() => router.push(item.route)}
+            onPress={() => router.push(item.route as any)}
           >
             <View style={[styles.menuIcon, { backgroundColor: item.color + '15' }]}>
               <MaterialCommunityIcons name={item.icon as any} size={24} color={item.color} />

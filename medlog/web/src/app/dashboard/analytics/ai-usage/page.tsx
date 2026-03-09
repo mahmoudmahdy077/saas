@@ -164,10 +164,10 @@ export default function AIUsageAnalyticsPage() {
                       {row.request_count}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
-                      {parseInt(row.total_tokens).toLocaleString()}
+                      {row.total_tokens.toLocaleString()}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">
-                      ${parseFloat(row.total_cost).toFixed(4)}
+                      ${row.total_cost.toFixed(4)}
                     </td>
                     <td className="px-4 py-3 text-sm">
                       <span className="px-2 py-1 bg-gray-100 rounded-full text-xs">

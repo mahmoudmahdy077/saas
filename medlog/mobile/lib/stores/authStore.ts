@@ -1,30 +1,84 @@
 import { create } from 'zustand'
 import { createClient, SupabaseClient, User } from '@supabase/supabase-js'
+import { Platform } from 'react-native'
 import * as SecureStore from 'expo-secure-store'
+
+const secureStorage = Platform.OS === 'web' 
+  ? {
+      getItem: async (key: string): Promise<string | null> => {
+        try { return localStorage.getItem(key) } catch { return null }
+      },
+      setItem: async (key: string, value: string): Promise<void> => {
+        try { localStorage.setItem(key, value) } catch { }
+      },
+      removeItem: async (key: string): Promise<void> => {
+        try { localStorage.removeItem(key) } catch { }
+      },
+    }
+  : {
+      getItem: async (key: string): Promise<string | null> => {
+        try { return await SecureStore.getItemAsync(key) } catch { return null }
+      },
+      setItem: async (key: string, value: string): Promise<void> => {
+        try { 
+          await SecureStore.setItemAsync(key, value, {
+            keychainAccessible: SecureStore.WHEN_UNLOCKED
+          })
+        } catch { }
+      },
+      removeItem: async (key: string): Promise<void> => {
+        try { await SecureStore.deleteItemAsync(key) } catch { }
+      },
+    }
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!
 
-const secureStorage = {
-  getItem: async (key: string): Promise<string | null> => {
-    try {
-      return await SecureStore.getItemAsync(key)
-    } catch {
-      return null
+// Platform-aware storage: localStorage on web, SecureStore on native
+const createStorage = () => {
+  if (Platform.OS === 'web') {
+    return {
+      getItem: async (key: string): Promise<string | null> => {
+        try {
+          return localStorage.getItem(key)
+        } catch {
+          return null
+        }
+      },
+      setItem: async (key: string, value: string): Promise<void> => {
+        try {
+          localStorage.setItem(key, value)
+        } catch { }
+      },
+      removeItem: async (key: string): Promise<void> => {
+        try {
+          localStorage.removeItem(key)
+        } catch { }
+      },
     }
-  },
-  setItem: async (key: string, value: string): Promise<void> => {
-    try {
-      await SecureStore.setItemAsync(key, value, {
-        keychainAccessible: SecureStore.WHEN_UNLOCKED
-      })
-    } catch {}
-  },
-  removeItem: async (key: string): Promise<void> => {
-    try {
-      await SecureStore.deleteItemAsync(key)
-    } catch {}
-  },
+  }
+
+  return {
+    getItem: async (key: string): Promise<string | null> => {
+      try {
+        return await SecureStore.getItemAsync(key)
+      } catch {
+        return null
+      }
+    },
+    setItem: async (key: string, value: string): Promise<void> => {
+      try {
+        await SecureStore.setItemAsync(key, value, {
+          keychainAccessible: SecureStore.WHEN_UNLOCKED
+        })
+      } catch { }
+    },
+    removeItem: async (key: string): Promise<void> => {
+      try {
+        await SecureStore.deleteItemAsync(key)
+      } catch { }
+    },
+  }
 }
 
 export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
@@ -60,7 +114,7 @@ interface AuthState {
   session: any | null
   loading: boolean
   initialized: boolean
-  
+
   initialize: () => Promise<void>
   signIn: (email: string, password: string) => Promise<{ error: string | null }>
   signUp: (email: string, password: string, fullName: string, specialty: string) => Promise<{ error: string | null }>
@@ -79,7 +133,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   initialize: async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession()
-      
+
       if (session?.user) {
         const { data: profile } = await supabase
           .from('profiles')
@@ -87,11 +141,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           .eq('id', session.user.id)
           .single()
 
-        set({ 
-          user: session.user, 
+        set({
+          user: session.user,
           profile: profile as Profile,
           session,
-          initialized: true 
+          initialized: true
         })
       } else {
         set({ initialized: true })
@@ -122,11 +176,11 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           .eq('id', data.user.id)
           .single()
 
-        set({ 
-          user: data.user, 
+        set({
+          user: data.user,
           profile: profile as Profile,
           session: data.session,
-          loading: false 
+          loading: false
         })
       }
 
@@ -184,10 +238,10 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           .eq('id', data.user.id)
           .single()
 
-        set({ 
-          user: data.user, 
+        set({
+          user: data.user,
           profile: profile as Profile,
-          loading: false 
+          loading: false
         })
       }
 

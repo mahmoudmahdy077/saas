@@ -45,7 +45,7 @@ export default function SuperAdminDashboardScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Administration</Text>
         {sections.map((item, index) => (
-          <TouchableOpacity key={index} style={styles.menuCard} onPress={() => router.push(item.route)}>
+          <TouchableOpacity key={index} style={styles.menuCard} onPress={() => router.push(item.route as any)}>
             <View style={[styles.menuIcon, { backgroundColor: item.color + '15' }]}><MaterialCommunityIcons name={item.icon as any} size={24} color={item.color} /></View>
             <Text style={styles.menuText}>{item.title}</Text>
             <MaterialCommunityIcons name="chevron-right" size={24} color="#cbd5e1" />

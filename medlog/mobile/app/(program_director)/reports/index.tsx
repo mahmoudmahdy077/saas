@@ -43,6 +43,8 @@ export default function PDReportsScreen() {
             chartConfig={chartConfig}
             style={styles.chart}
             showValuesOnTopOfBars
+            yAxisLabel=""
+            yAxisSuffix=""
           />
         </View>
       </View>

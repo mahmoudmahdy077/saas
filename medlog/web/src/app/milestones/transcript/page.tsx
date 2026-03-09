@@ -252,7 +252,7 @@ export default function MilestoneTranscriptPage() {
             <div>
               <p className="text-sm text-gray-500">Level 4-5</p>
               <p className="text-2xl font-bold text-gray-900">
-                {milestones.filter(m => m.latest_assessment?.level >= 4).length}
+                {milestones.filter(m => m.latest_assessment && m.latest_assessment.level >= 4).length}
               </p>
             </div>
           </div>

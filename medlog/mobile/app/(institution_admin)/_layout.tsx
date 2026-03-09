@@ -25,7 +25,7 @@ export default function InstitutionAdminLayout() {
       }}
     >
       <Tabs.Screen
-        name="dashboard"
+        name="dashboard/index"
         options={{
           title: 'Admin',
           tabBarLabel: 'Dashboard',
@@ -35,7 +35,7 @@ export default function InstitutionAdminLayout() {
         }}
       />
       <Tabs.Screen
-        name="users"
+        name="users/index"
         options={{
           title: 'Users',
           tabBarLabel: 'Users',
@@ -45,7 +45,7 @@ export default function InstitutionAdminLayout() {
         }}
       />
       <Tabs.Screen
-        name="billing"
+        name="billing/index"
         options={{
           title: 'Billing',
           tabBarLabel: 'Billing',
@@ -55,7 +55,7 @@ export default function InstitutionAdminLayout() {
         }}
       />
       <Tabs.Screen
-        name="settings"
+        name="settings/index"
         options={{
           title: 'Settings',
           tabBarLabel: 'Settings',

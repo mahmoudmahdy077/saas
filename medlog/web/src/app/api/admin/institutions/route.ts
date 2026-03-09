@@ -11,16 +11,16 @@ const rateLimitStore = new Map<string, { count: number; resetAt: number }>()
 function rateLimit(key: string, limit: number = 30, windowMs: number = 60000): boolean {
   const now = Date.now()
   const record = rateLimitStore.get(key)
-  
+
   if (!record || now > record.resetAt) {
     rateLimitStore.set(key, { count: 1, resetAt: now + windowMs })
     return true
   }
-  
+
   if (record.count >= limit) {
     return false
   }
-  
+
   record.count++
   return true
 }
@@ -42,8 +42,8 @@ function validateUUID(id: string): boolean {
 
 async function getAdminUser(request: NextRequest) {
   const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const supabaseAdmin = createClient(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE auth: { persist_KEY!, {
-   Session: false }
+  const supabaseAdmin = createClient(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+    auth: { persistSession: false }
   })
 
   const accessToken = request.cookies.get('sb-access-token')?.value
@@ -64,10 +64,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const ip = request.headers.get('x-forwarded-for') || 
-             request.headers.get('x-real-ip') || 
-             'unknown'
-  
+  const ip = request.headers.get('x-forwarded-for') ||
+    request.headers.get('x-real-ip') ||
+    'unknown'
+
   if (!rateLimit(`admin:${ip}`)) {
     return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
   }
@@ -127,10 +127,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const ip = request.headers.get('x-forwarded-for') || 
-             request.headers.get('x-real-ip') || 
-             'unknown'
-  
+  const ip = request.headers.get('x-forwarded-for') ||
+    request.headers.get('x-real-ip') ||
+    'unknown'
+
   if (!rateLimit(`admin:${ip}`)) {
     return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
   }

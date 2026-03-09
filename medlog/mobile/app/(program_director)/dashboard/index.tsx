@@ -73,7 +73,7 @@ export default function PDDashboardScreen() {
             <TouchableOpacity
               key={index}
               style={styles.actionCard}
-              onPress={() => router.push(action.route)}
+              onPress={() => router.push(action.route as any)}
             >
               <View style={[styles.actionIcon, { backgroundColor: action.color + '20' }]}>
                 <MaterialCommunityIcons name={action.icon as any} size={24} color={action.color} />

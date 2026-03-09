@@ -1,4 +1,5 @@
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Switch } from 'react-native'
+import { useState } from 'react'
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useAuthStore } from '../../../lib/stores/authStore'
 

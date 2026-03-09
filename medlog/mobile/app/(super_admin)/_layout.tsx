@@ -25,7 +25,7 @@ export default function SuperAdminLayout() {
       }}
     >
       <Tabs.Screen
-        name="dashboard"
+        name="dashboard/index"
         options={{
           title: 'Super Admin',
           tabBarLabel: 'Dashboard',
@@ -35,7 +35,7 @@ export default function SuperAdminLayout() {
         }}
       />
       <Tabs.Screen
-        name="institutions"
+        name="institutions/index"
         options={{
           title: 'Institutions',
           tabBarLabel: 'Institutions',
@@ -45,7 +45,7 @@ export default function SuperAdminLayout() {
         }}
       />
       <Tabs.Screen
-        name="audit-logs"
+        name="audit-logs/index"
         options={{
           title: 'Audit Logs',
           tabBarLabel: 'Logs',
@@ -55,7 +55,7 @@ export default function SuperAdminLayout() {
         }}
       />
       <Tabs.Screen
-        name="plans"
+        name="plans/index"
         options={{
           title: 'Plans',
           tabBarLabel: 'Plans',
@@ -65,7 +65,7 @@ export default function SuperAdminLayout() {
         }}
       />
       <Tabs.Screen
-        name="settings"
+        name="settings/index"
         options={{
           title: 'Settings',
           tabBarLabel: 'Settings',

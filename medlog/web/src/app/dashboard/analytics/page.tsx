@@ -1,27 +1,29 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
   LineChart,
   Line,
-  Legend,
+  Legend
+} from 'recharts'
+import {
   TrendingUp,
   TrendingDown,
   Users,
   FileText,
   Award,
   Loader2
-} from 'recharts'
+} from 'lucide-react'
 
 interface AnalyticsData {
   monthlyTrend: { month: string; cases: number }[]
@@ -63,14 +65,14 @@ export default function EnhancedAnalyticsPage() {
   const stats = data ? {
     totalCases: data.monthlyTrend.reduce((sum, m) => sum + m.cases, 0),
     avgMonthly: Math.round(data.monthlyTrend.reduce((sum, m) => sum + m.cases, 0) / Math.max(data.monthlyTrend.length, 1)),
-    verifiedRate: data.verificationStatus.length > 0 
-      ? Math.round((data.verificationStatus.find(s => s.status === 'verified')?.count || 0) / 
+    verifiedRate: data.verificationStatus.length > 0
+      ? Math.round((data.verificationStatus.find(s => s.status === 'verified')?.count || 0) /
         data.verificationStatus.reduce((sum, s) => sum + s.count, 0) * 100)
       : 0,
     topCategory: data.categoryBreakdown[0]?.category || 'N/A'
   } : { totalCases: 0, avgMonthly: 0, verifiedRate: 0, topCategory: 'N/A' }
 
-  const trend = data && data.monthlyTrend.length >= 2 
+  const trend = data && data.monthlyTrend.length >= 2
     ? ((data.monthlyTrend[data.monthlyTrend.length - 1].cases - data.monthlyTrend[0].cases) / Math.max(data.monthlyTrend[0].cases, 1) * 100)
     : 0
 

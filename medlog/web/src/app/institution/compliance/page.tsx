@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import {
@@ -18,7 +18,7 @@ import {
 
 type ReportType = 'case_volume' | 'minimums' | 'resident_summary' | 'milestone'
 
-export default function CompliancePage() {
+function CompliancePageContent() {
   const searchParams = useSearchParams()
   const [activeReport, setActiveReport] = useState<ReportType>('case_volume')
   const [loading, setLoading] = useState(false)
@@ -388,5 +388,13 @@ export default function CompliancePage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function CompliancePage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+      <CompliancePageContent />
+    </Suspense>
   )
 }

@@ -28,10 +28,10 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const reportType = searchParams.get('type') || 'case_volume'
-    const period = searchParams.get('period')
-    const startDate = searchParams.get('start_date')
-    const endDate = searchParams.get('end_date')
-    const residentId = searchParams.get('resident_id')
+    const period = searchParams.get('period') || undefined
+    const startDate = searchParams.get('start_date') || undefined
+    const endDate = searchParams.get('end_date') || undefined
+    const residentId = searchParams.get('resident_id') || undefined
 
     const profileResult = await pool.query(`
       SELECT role, institution_id FROM public.profiles WHERE id = $1
@@ -143,7 +143,7 @@ async function getCaseVolumeReport(institutionId: string, period?: string, start
     summary: {
       total_cases: result.rows.reduce((sum, r) => sum + parseInt(r.total_cases), 0),
       total_residents: result.rows.length,
-      avg_cases_per_resident: result.rows.length > 0 
+      avg_cases_per_resident: result.rows.length > 0
         ? Math.round(result.rows.reduce((sum, r) => sum + parseInt(r.total_cases), 0) / result.rows.length)
         : 0
     }
@@ -285,7 +285,7 @@ async function getResidentSummaryReport(institutionId: string, period?: string, 
       ORDER BY count DESC
     `, [resident.resident_id])
 
-    const verificationRate = resident.total_cases > 0 
+    const verificationRate = resident.total_cases > 0
       ? Math.round(((resident.consultant_verified + resident.pd_approved) / resident.total_cases) * 100)
       : 0
 
@@ -351,7 +351,7 @@ async function getMilestoneReport(institutionId: string, residentId?: string) {
     })
 
     const avgLevel = milestoneLevels.filter((m: any) => m.current_level !== null)
-      .reduce((sum: number, m: any) => sum + m.current_level, 0) / 
+      .reduce((sum: number, m: any) => sum + m.current_level, 0) /
       (milestoneLevels.filter((m: any) => m.current_level !== null).length || 1)
 
     return {

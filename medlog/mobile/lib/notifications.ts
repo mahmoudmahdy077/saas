@@ -1,5 +1,4 @@
 import * as Notifications from 'expo-notifications'
-import * as Device from 'expo-device'
 import { Platform } from 'react-native'
 
 Notifications.setNotificationHandler({
@@ -12,7 +11,7 @@ Notifications.setNotificationHandler({
 
 export const NotificationService = {
   async requestPermissions(): Promise<boolean> {
-    if (!Device.isDevice) {
+    if (Platform.OS === 'web') {
       console.log('Notifications only work on physical devices')
       return false
     }
@@ -76,10 +75,10 @@ export const NotificationService = {
       },
       trigger: {
         type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
-        dayOfWeek,
+        weekday: dayOfWeek,
         hour: 9,
         minute: 0,
-      },
+      } as Notifications.WeeklyTriggerInput,
     })
 
     return id

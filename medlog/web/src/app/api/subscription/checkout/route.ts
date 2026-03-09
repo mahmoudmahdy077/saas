@@ -25,7 +25,7 @@ function getStripe() {
   if (!secretKey) {
     throw new Error('STRIPE_SECRET_KEY is not configured')
   }
-  return new Stripe(secretKey, { apiVersion: '2024-12-18.acacia' })
+  return new Stripe(secretKey, { apiVersion: '2023-10-16' })
 }
 
 export async function POST(request: NextRequest) {

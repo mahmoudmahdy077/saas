@@ -25,7 +25,7 @@ export default function ProgramDirectorLayout() {
       }}
     >
       <Tabs.Screen
-        name="dashboard"
+        name="dashboard/index"
         options={{
           title: 'PD Dashboard',
           tabBarLabel: 'Dashboard',
@@ -35,7 +35,7 @@ export default function ProgramDirectorLayout() {
         }}
       />
       <Tabs.Screen
-        name="residents"
+        name="residents/index"
         options={{
           title: 'Residents',
           tabBarLabel: 'Residents',
@@ -45,7 +45,7 @@ export default function ProgramDirectorLayout() {
         }}
       />
       <Tabs.Screen
-        name="reports"
+        name="reports/index"
         options={{
           title: 'Reports',
           tabBarLabel: 'Reports',
@@ -55,7 +55,7 @@ export default function ProgramDirectorLayout() {
         }}
       />
       <Tabs.Screen
-        name="milestones"
+        name="milestones/index"
         options={{
           title: 'Milestones',
           tabBarLabel: 'Milestones',
@@ -65,7 +65,7 @@ export default function ProgramDirectorLayout() {
         }}
       />
       <Tabs.Screen
-        name="../settings"
+        name="settings/index"
         options={{
           title: 'Settings',
           tabBarLabel: 'Settings',

@@ -12,7 +12,7 @@ import {
 
 export default function RootLayout() {
   const { user, profile, initialized } = useAuthStore()
-  
+
   const [fontsLoaded] = useFonts({
     PlusJakartaSans_400Regular,
     PlusJakartaSans_500Medium,
@@ -58,7 +58,31 @@ export default function RootLayout() {
       }}
     >
       <Stack.Screen
-        name={routeGroup}
+        name="index"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="(auth)"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="(main)"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="(super_admin)"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="(institution_admin)"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="(program_director)"
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="(consultant)"
         options={{ headerShown: false }}
       />
     </Stack>
