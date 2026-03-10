@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-export async function GET(request: NextRequest, { params }: { params: { token: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ token: string }> }) {
   try {
-    const token = params.token
+    const { token } = await params
 
     const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:54321'}/rest/v1/portfolios?share_token=eq.${token}&is_public=eq.true&select=*`, {
       headers: {

@@ -54,7 +54,8 @@ async function verifySCIMAuth(request: NextRequest) {
   return result.rows[0] || null
 }
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id: paramsId } = await params
   const scim = await verifySCIMAuth(request)
   if (!scim) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -68,7 +69,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
   }
 
-  if (!validateUUID(params.id)) {
+  if (!validateUUID(paramsId)) {
     return NextResponse.json({ error: 'Invalid user ID' }, { status: 400 })
   }
 
@@ -77,7 +78,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       SELECT id, email, full_name, role, created_at
       FROM public.profiles
       WHERE id = $1 AND institution_id = $2
-    `, [params.id, scim.institution_id])
+    `, [paramsId, scim.institution_id])
 
     if (result.rows.length === 0) {
       return NextResponse.json({
@@ -105,7 +106,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id: paramsId } = await params
   const scim = await verifySCIMAuth(request)
   if (!scim) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -119,7 +121,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
   }
 
-  if (!validateUUID(params.id)) {
+  if (!validateUUID(paramsId)) {
     return NextResponse.json({ error: 'Invalid user ID' }, { status: 400 })
   }
 
@@ -137,11 +139,11 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         full_name = $1,
         updated_at = NOW()
       WHERE id = $2 AND institution_id = $3
-    `, [fullName, params.id, scim.institution_id])
+    `, [fullName, paramsId, scim.institution_id])
 
     return NextResponse.json({
       schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
-      id: params.id,
+      id: paramsId,
       userName: sanitizeString(userName, 255),
       name: { 
         givenName: sanitizeString(name?.givenName, 100), 
@@ -156,7 +158,8 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id: paramsId } = await params
   const scim = await verifySCIMAuth(request)
   if (!scim) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -170,7 +173,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
   }
 
-  if (!validateUUID(params.id)) {
+  if (!validateUUID(paramsId)) {
     return NextResponse.json({ error: 'Invalid user ID' }, { status: 400 })
   }
 
@@ -178,7 +181,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     await pool.query(`
       DELETE FROM public.profiles 
       WHERE id = $1 AND institution_id = $2
-    `, [params.id, scim.institution_id])
+    `, [paramsId, scim.institution_id])
 
     return new NextResponse(null, { status: 204 })
   } catch (error: any) {
@@ -187,7 +190,8 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   }
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id: paramsId } = await params
   const scim = await verifySCIMAuth(request)
   if (!scim) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -201,7 +205,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
   }
 
-  if (!validateUUID(params.id)) {
+  if (!validateUUID(paramsId)) {
     return NextResponse.json({ error: 'Invalid user ID' }, { status: 400 })
   }
 
@@ -218,13 +222,13 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
         await pool.query(`
           UPDATE public.profiles SET updated_at = NOW()
           WHERE id = $1 AND institution_id = $2
-        `, [params.id, scim.institution_id])
+        `, [paramsId, scim.institution_id])
       }
     }
 
     return NextResponse.json({
       schemas: ['urn:ietf:params:scim:schemas:core:2.0:User'],
-      id: params.id,
+      id: paramsId,
       meta: { resourceType: 'User' }
     })
   } catch (error: any) {

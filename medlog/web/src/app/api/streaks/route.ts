@@ -5,7 +5,7 @@ import { getLocalDate, getLocalYesterday } from '@/lib/date-utils'
 
 export async function GET() {
     try {
-        const cookieStore = cookies()
+        const cookieStore = await cookies()
         const accessToken = cookieStore.get('sb-access-token')?.value
         
         console.log('[streaks] Access token present:', !!accessToken)

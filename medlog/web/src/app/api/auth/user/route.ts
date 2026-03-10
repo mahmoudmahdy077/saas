@@ -9,7 +9,7 @@ export async function GET() {
   console.log(`[${requestId}] GET /api/auth/user starting...`)
 
   try {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const allCookies = cookieStore.getAll()
     console.log(`[${requestId}] Available cookies: ${allCookies.map(c => c.name).join(', ')}`)
 

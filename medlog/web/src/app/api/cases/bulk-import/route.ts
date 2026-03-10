@@ -4,8 +4,8 @@ import { cookies } from 'next/headers'
 
 const MAX_BULK_CASES = 500
 
-function createSupabaseServer() {
-  const cookieStore = cookies()
+async function createSupabaseServer() {
+  const cookieStore = await cookies()
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const supabase = createSupabaseServer()
+    const supabase = await createSupabaseServer()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
