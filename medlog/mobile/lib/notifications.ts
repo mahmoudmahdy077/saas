@@ -54,9 +54,9 @@ export const NotificationService = {
         data: { type: 'case_reminder' },
       },
       trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.DAILY,
         hour,
         minute,
+        repeats: true,
       },
     })
 
@@ -74,11 +74,11 @@ export const NotificationService = {
         data: { type: 'weekly_report' },
       },
       trigger: {
-        type: Notifications.SchedulableTriggerInputTypes.WEEKLY,
         weekday: dayOfWeek,
         hour: 9,
         minute: 0,
-      } as Notifications.WeeklyTriggerInput,
+        repeats: true,
+      },
     })
 
     return id
@@ -87,7 +87,7 @@ export const NotificationService = {
   async sendLocalNotification(
     title: string,
     body: string,
-    data?: Record<string, any>
+    data?: Record<string, unknown>
   ): Promise<void> {
     const hasPermission = await this.requestPermissions()
     if (!hasPermission) return
