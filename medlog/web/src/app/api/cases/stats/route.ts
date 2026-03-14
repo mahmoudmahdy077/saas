@@ -69,7 +69,7 @@ export async function GET() {
       pending: pendingResult.count || 0,
     })
   } catch (error) {
-    console.error('Error fetching stats:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    logger.error('Error fetching stats', error as Error, { route: '/api/cases/stats', userId: user?.id })
+    return NextResponse.json({ error: 'Internal server error', code: 'FETCH_STATS_FAILED' }, { status: 500 })
   }
 }
