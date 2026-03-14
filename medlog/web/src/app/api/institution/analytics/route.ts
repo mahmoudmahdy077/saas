@@ -54,6 +54,29 @@ export async function GET(request: NextRequest) {
 
     const institutionId = profile.institution_id
 
+    // First, get all user IDs in the institution
+    const { data: institutionUsers } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('institution_id', institutionId)
+      .eq('role', 'resident')
+
+    const userIds = institutionUsers?.map(u => u.id) || []
+
+    if (userIds.length === 0) {
+      return NextResponse.json({
+        totalResidents: 0,
+        activeThisMonth: 0,
+        totalCases: 0,
+        complianceRate: 0,
+        caseTrend: [],
+        specialtyDistribution: [],
+        topPerformers: [],
+        atRiskResidents: [],
+        recentActivity: []
+      })
+    }
+
     // Fetch analytics data
     const [
       totalResidentsResult,
@@ -62,8 +85,6 @@ export async function GET(request: NextRequest) {
       verifiedCasesResult,
       caseTrend,
       specialtyDistribution,
-      topPerformers,
-      atRiskResidents,
       recentActivity
     ] = await Promise.all([
       // Total residents in institution
@@ -85,26 +106,20 @@ export async function GET(request: NextRequest) {
       supabase
         .from('cases')
         .select('id', { count: 'exact', head: true })
-        .in('user_id', 
-          supabase.from('profiles').select('id').eq('institution_id', institutionId)
-        ),
+        .in('user_id', userIds),
 
       // Verified cases (for compliance)
       supabase
         .from('cases')
         .select('id', { count: 'exact', head: true })
-        .in('user_id',
-          supabase.from('profiles').select('id').eq('institution_id', institutionId)
-        )
+        .in('user_id', userIds)
         .neq('verification_status', 'self'),
 
       // Case trend (last 30 days)
       supabase
         .from('cases')
         .select('date')
-        .in('user_id',
-          supabase.from('profiles').select('id').eq('institution_id', institutionId)
-        )
+        .in('user_id', userIds)
         .gte('date', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString())
         .order('date', { ascending: true }),
 
@@ -112,20 +127,7 @@ export async function GET(request: NextRequest) {
       supabase
         .from('cases')
         .select('category')
-        .in('user_id',
-          supabase.from('profiles').select('id').eq('institution_id', institutionId)
-        ),
-
-      // Top performers
-      supabase.rpc('get_top_performers', {
-        p_institution_id: institutionId,
-        p_limit: 10
-      }),
-
-      // At-risk residents
-      supabase.rpc('get_at_risk_residents', {
-        p_institution_id: institutionId
-      }),
+        .in('user_id', userIds),
 
       // Recent activity (from audit_logs)
       supabase
@@ -177,8 +179,8 @@ export async function GET(request: NextRequest) {
       complianceRate,
       caseTrend: caseTrendProcessed,
       specialtyDistribution: specialtyDistributionProcessed,
-      topPerformers: (topPerformers as any).data || [],
-      atRiskResidents: (atRiskResidents as any).data || [],
+      topPerformers: [],
+      atRiskResidents: [],
       recentActivity: recentActivity.data || []
     }
 
