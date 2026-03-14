@@ -97,9 +97,9 @@ export function DataTable<TData, TValue>({
         <div className="rounded-md border">
           <table className="w-full">
             <thead className="bg-gray-50 dark:bg-gray-800">
-              {table.getHeaderGroups().map((headerGroup) => (
+              {table.getHeaderGroups().map((headerGroup: any) => (
                 <tr key={headerGroup.id} className="border-b">
-                  {headerGroup.headers.map((header) => (
+                  {headerGroup.headers.map((header: any) => (
                     <th
                       key={header.id}
                       className="h-12 px-4 text-left align-middle font-medium text-gray-500 dark:text-gray-400"
@@ -128,7 +128,7 @@ export function DataTable<TData, TValue>({
             <tbody>
               <AnimatePresence>
                 {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row, index) => (
+                  table.getRowModel().rows.map((row: any, index: number) => (
                     <motion.tr
                       key={row.id}
                       initial={{ opacity: 0, y: 10 }}
@@ -140,7 +140,7 @@ export function DataTable<TData, TValue>({
                       }`}
                       onClick={() => onRowClick?.(row.original)}
                     >
-                      {row.getVisibleCells().map((cell) => (
+                      {row.getVisibleCells().map((cell: any) => (
                         <td key={cell.id} className="p-4 align-middle">
                           {flexRender(
                             cell.column.columnDef.cell,
