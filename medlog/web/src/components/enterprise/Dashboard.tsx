@@ -261,7 +261,7 @@ export default function EnterpriseDashboardV2() {
                       fill="#8884d8"
                       dataKey="value"
                     >
-                      {data.specialtyDistribution.map((entry, index) => (
+                      {data.specialtyDistribution?.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>

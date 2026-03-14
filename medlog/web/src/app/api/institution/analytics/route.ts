@@ -56,10 +56,10 @@ export async function GET(request: NextRequest) {
 
     // Fetch analytics data
     const [
-      totalResidents,
-      activeThisMonth,
-      totalCases,
-      verifiedCases,
+      totalResidentsResult,
+      activeThisMonthResult,
+      totalCasesResult,
+      verifiedCasesResult,
       caseTrend,
       specialtyDistribution,
       topPerformers,
@@ -136,6 +136,11 @@ export async function GET(request: NextRequest) {
         .limit(20)
     ])
 
+    const totalResidents = totalResidentsResult.count || 0
+    const activeThisMonth = activeThisMonthResult.count || 0
+    const totalCasesCount = totalCasesResult.count || 0
+    const verifiedCasesCount = verifiedCasesResult.count || 0
+
     // Process case trend
     const trendMap = new Map<string, number>()
     caseTrend.data?.forEach((item: any) => {
@@ -161,19 +166,19 @@ export async function GET(request: NextRequest) {
     }))
 
     // Calculate compliance rate
-    const complianceRate = totalCases.data?.[0]?.count 
-      ? Math.round((verifiedCases.data?.[0]?.count || 0) / totalCases.data[0].count * 100)
+    const complianceRate = totalCasesCount
+      ? Math.round((verifiedCasesCount / totalCasesCount) * 100)
       : 100
 
     const analytics = {
-      totalResidents: totalResidents.count || 0,
-      activeThisMonth: activeThisMonth.count || 0,
-      totalCases: totalCases.count || 0,
+      totalResidents,
+      activeThisMonth,
+      totalCases: totalCasesCount,
       complianceRate,
       caseTrend: caseTrendProcessed,
       specialtyDistribution: specialtyDistributionProcessed,
-      topPerformers: topPerformers.data || [],
-      atRiskResidents: atRiskResidents.data || [],
+      topPerformers: (topPerformers as any).data || [],
+      atRiskResidents: (atRiskResidents as any).data || [],
       recentActivity: recentActivity.data || []
     }
 

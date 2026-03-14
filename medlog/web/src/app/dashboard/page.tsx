@@ -314,7 +314,7 @@ export default function Dashboard() {
                     <Input
                       placeholder="Search cases..."
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
                       className="pl-8 w-64"
                     />
                   </div>

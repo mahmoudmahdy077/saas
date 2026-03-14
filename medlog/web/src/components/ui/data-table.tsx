@@ -232,8 +232,8 @@ export const createColumn = <TData, TValue = unknown>(
   enableSorting: options?.enableSorting ?? true,
   size: options?.width,
   cell: options?.cell
-    ? ({ row }) => options.cell!(row.original)
-    : ({ getValue }) => getValue() as React.ReactNode,
+    ? ({ row }: { row: { original: TData } }) => options.cell!(row.original)
+    : ({ getValue }: { getValue: () => TValue }) => getValue() as React.ReactNode,
 })
 
 export const BadgeCell = ({
