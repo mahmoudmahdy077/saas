@@ -1,159 +1,132 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import { Pool } from 'pg'
+import { createServerClient } from '@supabase/ssr'
+import { cookies } from 'next/headers'
+import { logger } from '@/lib/logger'
 
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || `postgresql://postgres:${process.env.DB_PASSWORD || 'medlog2024'}@db:5432/medlog`
-})
-
-async function getAuthenticatedUser(request: NextRequest) {
-  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const supabaseAdmin = createClient(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
-    auth: { persistSession: false }
-  })
-
-  const accessToken = request.cookies.get('sb-access-token')?.value
-  if (!accessToken) return null
-
-  const { data: { user } } = await supabaseAdmin.auth.getUser(accessToken)
-  return user
-}
+/**
+ * Audit Logs API - Enterprise Feature
+ * Track all user actions for compliance (HIPAA, SOC2)
+ */
 
 export async function GET(request: NextRequest) {
-  const user = await getAuthenticatedUser(request)
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
+  let user: any
   try {
-    const { searchParams } = new URL(request.url)
-    const action = searchParams.get('action')
-    const resourceType = searchParams.get('resource_type')
-    const userId = searchParams.get('user_id')
-    const startDate = searchParams.get('start_date')
-    const endDate = searchParams.get('end_date')
-    const limit = parseInt(searchParams.get('limit') || '50')
-    const offset = parseInt(searchParams.get('offset') || '0')
-
-    let profileResult = await pool.query(
-      'SELECT institution_id, role FROM public.profiles WHERE id = $1',
-      [user.id]
+    const cookieStore = await cookies()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll()
+          },
+          setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options)
+            })
+          },
+        },
+      }
     )
-    const profile = profileResult.rows[0]
 
-    if (!profile) {
-      return NextResponse.json({ error: 'Profile not found' }, { status: 404 })
+    const { data: { user: authenticatedUser } } = await supabase.auth.getUser()
+    user = authenticatedUser
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    let query = `
-      SELECT al.*, p.full_name as user_name, p.email as user_email
-      FROM public.audit_logs al
-      LEFT JOIN public.profiles p ON al.user_id = p.id
-      WHERE 1=1
-    `
-    const params: any[] = []
+    const { searchParams } = new URL(request.url)
+    const limit = parseInt(searchParams.get('limit') || '100')
+    const startDate = searchParams.get('startDate')
+    const endDate = searchParams.get('endDate')
+    const actionType = searchParams.get('actionType')
 
-    if (profile.role === 'resident') {
-      query += ` AND al.user_id = $${params.length + 1}`
-      params.push(user.id)
-    } else if (profile.role === 'program_director' || profile.role === 'institution_admin') {
-      query += ` AND al.institution_id = $${params.length + 1}`
-      params.push(profile.institution_id)
-    } else if (profile.role === 'super_admin') {
-    } else {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    let query = supabase
+      .from('audit_logs')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(limit)
+
+    if (startDate) query = query.gte('created_at', startDate)
+    if (endDate) query = query.lte('created_at', endDate)
+    if (actionType) query = query.eq('action_type', actionType)
+
+    const { data: logs, error } = await query
+
+    if (error) {
+      logger.error('Failed to fetch audit logs', error as Error, { 
+        route: '/api/audit-logs', 
+        userId: user.id 
+      })
+      return NextResponse.json({ error: 'Failed to fetch logs', code: 'FETCH_AUDIT_LOGS_FAILED' }, { status: 500 })
     }
 
-    if (action) {
-      params.push(action)
-      query += ` AND al.action = $${params.length}`
-    }
-
-    if (resourceType) {
-      params.push(resourceType)
-      query += ` AND al.resource_type = $${params.length}`
-    }
-
-    if (userId) {
-      params.push(userId)
-      query += ` AND al.user_id = $${params.length}`
-    }
-
-    if (startDate) {
-      params.push(startDate)
-      query += ` AND al.created_at >= $${params.length}`
-    }
-
-    if (endDate) {
-      params.push(endDate)
-      query += ` AND al.created_at <= $${params.length}`
-    }
-
-    query += ` ORDER BY al.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`
-    params.push(limit, offset)
-
-    const result = await pool.query(query, params)
-
-    return NextResponse.json({
-      audit_logs: result.rows,
-      limit,
-      offset
-    })
-  } catch (error: any) {
-    console.error('Error fetching audit logs:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ logs, count: logs?.length || 0 })
+  } catch (error) {
+    logger.error('Error fetching audit logs', error as Error, { route: '/api/audit-logs', userId: user?.id })
+    return NextResponse.json({ error: 'Internal server error', code: 'AUDIT_LOGS_FETCH_FAILED' }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
-  const user = await getAuthenticatedUser(request)
-  if (!user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
-
+  let user: any
   try {
-    const body = await request.json()
-    const { action, resource_type, resource_id, details } = body
+    const cookieStore = await cookies()
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll()
+          },
+          setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options)
+            })
+          },
+        },
+      }
+    )
 
-    if (!action || !resource_type) {
-      return NextResponse.json({ error: 'Action and resource_type are required' }, { status: 400 })
+    const { data: { user: authenticatedUser } } = await supabase.auth.getUser()
+    user = authenticatedUser
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    let profileResult = await pool.query(
-      'SELECT institution_id FROM public.profiles WHERE id = $1',
-      [user.id]
-    )
-    const institutionId = profileResult.rows[0]?.institution_id
+    const body = await request.json()
+    const { action_type, resource_type, resource_id, metadata } = body
 
-    const ipAddress = request.headers.get('x-forwarded-for') || 'unknown'
-    const userAgent = request.headers.get('user-agent') || 'unknown'
-
-    const result = await pool.query(`
-      INSERT INTO public.audit_logs (
-        user_id,
-        institution_id,
-        action,
+    const { data: log, error } = await supabase
+      .from('audit_logs')
+      .insert({
+        user_id: user.id,
+        action_type,
         resource_type,
         resource_id,
-        details,
-        ip_address,
-        user_agent
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-      RETURNING *
-    `, [
-      user.id,
-      institutionId,
-      action,
-      resource_type,
-      resource_id,
-      details || {},
-      ipAddress,
-      userAgent
-    ])
+        metadata: metadata || {},
+        ip_address: request.headers.get('x-forwarded-for') || 'unknown',
+        user_agent: request.headers.get('user-agent') || 'unknown',
+      })
+      .select()
+      .single()
 
-    return NextResponse.json({ audit_log: result.rows[0] })
-  } catch (error: any) {
-    console.error('Error creating audit log:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      logger.error('Failed to create audit log', error as Error, { 
+        route: '/api/audit-logs', 
+        userId: user.id,
+        actionType: action_type
+      })
+      return NextResponse.json({ error: 'Failed to create log', code: 'CREATE_AUDIT_LOG_FAILED' }, { status: 500 })
+    }
+
+    return NextResponse.json({ log }, { status: 201 })
+  } catch (error) {
+    logger.error('Error creating audit log', error as Error, { route: '/api/audit-logs', userId: user?.id })
+    return NextResponse.json({ error: 'Internal server error', code: 'AUDIT_LOG_CREATE_FAILED' }, { status: 500 })
   }
 }
