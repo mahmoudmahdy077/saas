@@ -214,7 +214,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ case: caseData }, { status: 201 })
   } catch (error) {
-    logger.error('Error creating case', error as Error, { route: '/api/cases', userId: user?.id })
+    logger.error('Error creating case', error as Error, { route: '/api/cases' })
     return NextResponse.json({ error: 'Internal server error', code: 'CREATE_CASE_FAILED' }, { status: 500 })
   }
 }
