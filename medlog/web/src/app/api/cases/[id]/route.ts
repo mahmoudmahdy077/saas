@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { logger } from '@/lib/logger'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let caseId: string | undefined
   try {
     const cookieStore = await cookies()
     const { id } = await params
+    caseId = id
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -46,8 +49,8 @@ export async function GET(
 
     return NextResponse.json({ case: caseData })
   } catch (error) {
-    console.error('Error fetching case:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    logger.error('Error fetching case', error as Error, { route: '/api/cases/[id]', caseId })
+    return NextResponse.json({ error: 'Internal server error', code: 'FETCH_CASE_FAILED' }, { status: 500 })
   }
 }
 
@@ -55,9 +58,12 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let caseId: string | undefined
+  let userId: string | undefined
   try {
     const cookieStore = await cookies()
     const { id } = await params
+    caseId = id
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -77,6 +83,7 @@ export async function PUT(
     )
 
     const { data: { user } } = await supabase.auth.getUser()
+    userId = user?.id
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -98,8 +105,8 @@ export async function PUT(
 
     return NextResponse.json({ case: caseData })
   } catch (error) {
-    console.error('Error updating case:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    logger.error('Error updating case', error as Error, { route: '/api/cases/[id]', caseId, userId })
+    return NextResponse.json({ error: 'Internal server error', code: 'UPDATE_CASE_FAILED' }, { status: 500 })
   }
 }
 
@@ -107,9 +114,12 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  let caseId: string | undefined
+  let userId: string | undefined
   try {
     const cookieStore = await cookies()
     const { id } = await params
+    caseId = id
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -129,6 +139,7 @@ export async function DELETE(
     )
 
     const { data: { user } } = await supabase.auth.getUser()
+    userId = user?.id
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -146,7 +157,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error deleting case:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    logger.error('Error deleting case', error as Error, { route: '/api/cases/[id]', caseId, userId })
+    return NextResponse.json({ error: 'Internal server error', code: 'DELETE_CASE_FAILED' }, { status: 500 })
   }
 }

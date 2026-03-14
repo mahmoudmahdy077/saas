@@ -3,6 +3,7 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { getLocalDate, getLocalYesterday } from '@/lib/date-utils'
 import { stripXSS } from '@/lib/security'
+import { logger } from '@/lib/logger'
 
 export async function GET(request: NextRequest) {
   try {
@@ -78,8 +79,8 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ cases })
   } catch (error) {
-    console.error('Error fetching cases:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    logger.error('Error fetching cases', error as Error, { route: '/api/cases' })
+    return NextResponse.json({ error: 'Internal server error', code: 'FETCH_CASES_FAILED' }, { status: 500 })
   }
 }
 
@@ -213,7 +214,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ case: caseData }, { status: 201 })
   } catch (error) {
-    console.error('Error creating case:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    logger.error('Error creating case', error as Error, { route: '/api/cases', userId: user?.id })
+    return NextResponse.json({ error: 'Internal server error', code: 'CREATE_CASE_FAILED' }, { status: 500 })
   }
 }
