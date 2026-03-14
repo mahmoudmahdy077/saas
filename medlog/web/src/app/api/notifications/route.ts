@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
+import { logger } from '@/lib/logger'
 import { cookies } from 'next/headers'
 
 export async function GET() {

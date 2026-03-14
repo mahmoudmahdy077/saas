@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic'
 
+import { logger } from '@/lib/logger'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { Pool } from 'pg'
