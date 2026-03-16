@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { Pool } from 'pg'
 import { v4 as uuidv4 } from 'uuid'
 import path from 'path'
+import { logger } from '@/lib/logger'
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL || `postgresql://postgres:${process.env.DB_PASSWORD || 'medlog2024'}@db:5432/medlog`
@@ -256,7 +257,7 @@ export async function DELETE(request: NextRequest) {
         })
       )
     } catch (minioError) {
-      console.error('MinIO delete error:', minioError)
+      logger.error('MinIO delete error', minioError as Error, { route: '/api/cases/images' })
     }
 
     // Update database

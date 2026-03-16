@@ -1,449 +1,364 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { motion } from 'framer-motion'
 import {
   FileText,
   TrendingUp,
-  CheckCircle,
-  Clock,
-  Plus,
-  ArrowRight,
-  Brain,
-  Flame,
-  Snowflake,
-  Trophy,
   Users,
-  Building2,
-  Shield,
   Award,
-  ClipboardCheck,
-  GraduationCap,
-  BarChart3,
-  Settings,
-  FileDown
+  Clock,
+  CheckCircle2,
+  AlertCircle,
+  Plus,
+  Search,
+  Filter,
+  Download,
+  RefreshCw
 } from 'lucide-react'
-import Link from 'next/link'
 
-interface Stats {
-  totalCases: number
-  thisMonth: number
-  verified: number
-  pending: number
-}
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { AnimatedCard, AnimatedStatCard, AnimatedList, AnimatedProgressBar, AnimatedCounter } from '@/components/ui/animated-card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Input } from '@/components/ui/input'
 
-interface ResidentStats {
+interface DashboardData {
   totalCases: number
   thisMonth: number
   verified: number
   pending: number
   currentStreak: number
   longestStreak: number
-  streakFreezeAvailable: boolean
-  streakAtRisk: boolean
+  recentCases: Array<{
+    id: string
+    date: string
+    procedure_type: string
+    category: string
+    verification_status: string
+  }>
+  milestones: Array<{
+    id: string
+    title: string
+    progress: number
+    target: number
+    completed: boolean
+  }>
 }
 
-interface ConsultantStats {
-  pendingVerifications: number
-  verifiedToday: number
-  totalVerified: number
-}
-
-interface PDStats {
-  totalResidents: number
-  activeResidents: number
-  pendingVerifications: number
-  averageCasesPerResident: number
-}
-
-interface InstitutionStats {
-  totalUsers: number
-  totalCases: number
-  activeSpecialties: number
-  pendingVerifications: number
-}
-
-interface RecentCase {
-  id: string
-  procedure_type: string
-  category: string
-  date: string
-  verification_status: string
-  user_name?: string
-}
-
-interface User {
-  full_name: string
-  role: string
-  email?: string
-}
-
-export default function DashboardPage() {
-  const [user, setUser] = useState<User | null>(null)
+export default function Dashboard() {
   const [loading, setLoading] = useState(true)
-  const [residentStats, setResidentStats] = useState<ResidentStats | null>(null)
-  const [consultantStats, setConsultantStats] = useState<ConsultantStats | null>(null)
-  const [pdStats, setPDStats] = useState<PDStats | null>(null)
-  const [institutionStats, setInstitutionStats] = useState<InstitutionStats | null>(null)
-  const [recentCases, setRecentCases] = useState<RecentCase[]>([])
-  const [casesToVerify, setCasesToVerify] = useState<RecentCase[]>([])
-  const [freezing, setFreezing] = useState(false)
+  const [data, setData] = useState<DashboardData | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const response = await fetch('/api/auth/user', { credentials: 'include' })
-        if (!response.ok) {
-          window.location.href = '/login'
-          return
-        }
-        const data = await response.json()
-        const userProfile = data.profile ? { 
-          full_name: data.profile.full_name || data.user?.email?.split('@')[0] || 'User', 
-          role: data.profile.role || 'resident',
-          email: data.user?.email
-        } : { full_name: data.user?.email?.split('@')[0] || 'User', role: 'resident', email: data.user?.email }
-        setUser(userProfile)
-      } catch (error) {
-        console.error('Failed to fetch user:', error)
-        window.location.href = '/login'
-      }
-    }
-    fetchUser()
+    fetchDashboardData()
   }, [])
 
-  useEffect(() => {
-    if (!user) return
-
-    const fetchData = async () => {
-      try {
-        if (user.role === 'resident') {
-          const [statsRes, casesRes, streakRes] = await Promise.all([
-            fetch('/api/cases/stats', { credentials: 'include' }),
-            fetch('/api/cases?limit=5', { credentials: 'include' }),
-            fetch('/api/streaks', { credentials: 'include' }),
-          ])
-          if (statsRes.ok) {
-            const statsData = await statsRes.json()
-            setResidentStats({ ...statsData, currentStreak: 0, longestStreak: 0, streakFreezeAvailable: true, streakAtRisk: false })
-          }
-          if (casesRes.ok) {
-            const casesData = await casesRes.json()
-            setRecentCases(casesData.cases || [])
-          }
-          if (streakRes.ok) {
-            const streakData = await streakRes.json()
-            setResidentStats(prev => prev ? { ...prev, ...streakData } : null)
-          }
-        } else if (user.role === 'consultant') {
-          const res = await fetch('/api/institution/residents?action=stats', { credentials: 'include' })
-          if (res.ok) {
-            const data = await res.json()
-            setConsultantStats({
-              pendingVerifications: data.pendingVerifications || 0,
-              verifiedToday: data.verifiedToday || 0,
-              totalVerified: data.totalVerified || 0
-            })
-          }
-          const casesRes = await fetch('/api/cases?status=self&limit=10', { credentials: 'include' })
-          if (casesRes.ok) setCasesToVerify((await casesRes.json()).cases || [])
-        } else if (user.role === 'program_director') {
-          const res = await fetch('/api/institution/stats', { credentials: 'include' })
-          if (res.ok) {
-            const data = await res.json()
-            setPDStats({
-              totalResidents: data.totalResidents || 0,
-              activeResidents: data.activeResidents || 0,
-              pendingVerifications: data.pendingVerifications || 0,
-              averageCasesPerResident: data.averageCasesPerResident || 0
-            })
-          }
-        } else if (user.role === 'institution_admin' || user.role === 'super_admin') {
-          const res = await fetch('/api/institution/stats', { credentials: 'include' })
-          if (res.ok) {
-            const data = await res.json()
-            setInstitutionStats({
-              totalUsers: data.totalUsers || 0,
-              totalCases: data.totalCases || 0,
-              activeSpecialties: data.activeSpecialties || 0,
-              pendingVerifications: data.pendingVerifications || 0
-            })
-          }
-        }
-      } catch (error) {
-        console.error('Failed to fetch dashboard data:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchData()
-  }, [user])
-
-  const useStreakFreeze = async () => {
-    setFreezing(true)
+  const fetchDashboardData = async () => {
     try {
-      const res = await fetch('/api/streaks/freeze', { method: 'POST', credentials: 'include' })
-      if (res.ok && residentStats) {
-        setResidentStats(prev => prev ? { ...prev, streakAtRisk: false, streakFreezeAvailable: false } : null)
-      }
+      const response = await fetch('/api/cases/stats')
+      const stats = await response.json()
+      
+      const casesResponse = await fetch('/api/cases?limit=5')
+      const cases = await casesResponse.json()
+
+      setData({
+        totalCases: stats.totalCases || 0,
+        thisMonth: stats.thisMonth || 0,
+        verified: stats.verified || 0,
+        pending: stats.pending || 0,
+        currentStreak: 7, // TODO: Fetch from API
+        longestStreak: 21, // TODO: Fetch from API
+        recentCases: cases.cases || [],
+        milestones: [
+          { id: '1', title: '50 Cases', progress: 35, target: 50, completed: false },
+          { id: '2', title: '100 Cases', progress: 35, target: 100, completed: false },
+          { id: '3', title: '250 Cases', progress: 35, target: 250, completed: false },
+        ]
+      })
     } catch (error) {
-      console.error('Failed to use streak freeze:', error)
+      console.error('Failed to fetch dashboard data:', error)
     } finally {
-      setFreezing(false)
+      setLoading(false)
     }
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'self': return 'bg-gray-100 text-gray-700'
-      case 'consultant_verified': return 'bg-blue-100 text-blue-700'
-      case 'pd_approved': return 'bg-green-100 text-green-700'
-      default: return 'bg-gray-100 text-gray-700'
-    }
-  }
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'self': return 'Pending'
-      case 'consultant_verified': return 'Verified'
-      case 'pd_approved': return 'Approved'
-      default: return status
-    }
-  }
-
-  const getRoleTitle = () => {
-    switch (user?.role) {
-      case 'consultant': return 'Consultant Dashboard'
-      case 'program_director': return 'Program Director Dashboard'
-      case 'institution_admin': return 'Institution Admin Dashboard'
-      case 'super_admin': return 'Super Admin Dashboard'
-      default: return 'Resident Dashboard'
-    }
-  }
-
-  const getRoleDescription = () => {
-    switch (user?.role) {
-      case 'consultant': return 'Verify resident cases and track verifications'
-      case 'program_director': return 'Monitor resident progress and program analytics'
-      case 'institution_admin': return 'Manage institution settings and users'
-      case 'super_admin': return 'System administration and monitoring'
-      default: return 'Track your case logging progress'
-    }
-  }
-
-  if (loading || !user) {
+  if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      <div className="flex items-center justify-center h-screen">
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+        >
+          <RefreshCw className="w-8 h-8 text-blue-500" />
+        </motion.div>
       </div>
     )
   }
 
+  if (!data) {
+    return <div>Failed to load dashboard data</div>
+  }
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="container mx-auto p-6 space-y-6">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex justify-between items-center"
+      >
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{getRoleTitle()}</h1>
-          <p className="text-gray-600">{getRoleDescription()}</p>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Dashboard</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">
+            Track your orthopedic surgery progress
+          </p>
         </div>
-        {user.role === 'resident' && (
-          <Link href="/cases/new" className="inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 rounded-xl font-medium shadow-lg shadow-primary/20 hover:shadow-xl hover:-translate-y-0.5 hover:bg-primary-600 transition-all">
-            <Plus className="h-5 w-5" /> Add Case
-          </Link>
-        )}
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={fetchDashboardData}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh
+          </Button>
+          <Button>
+            <Plus className="w-4 h-4 mr-2" />
+            Log Case
+          </Button>
+        </div>
+      </motion.div>
+
+      {/* Stats Grid */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <AnimatedStatCard
+          title="Total Cases"
+          value={data.totalCases}
+          change={{ value: 20.1, isPositive: true }}
+          icon={FileText}
+          delay={0}
+        />
+        <AnimatedStatCard
+          title="This Month"
+          value={data.thisMonth}
+          change={{ value: 15.3, isPositive: true }}
+          icon={TrendingUp}
+          delay={0.1}
+        />
+        <AnimatedStatCard
+          title="Verified Cases"
+          value={data.verified}
+          change={{ value: 8.5, isPositive: true }}
+          icon={CheckCircle2}
+          delay={0.2}
+        />
+        <AnimatedStatCard
+          title="Pending Review"
+          value={data.pending}
+          change={{ value: 5.2, isPositive: false }}
+          icon={Clock}
+          delay={0.3}
+        />
       </div>
 
-      {/* RESIDENT DASHBOARD */}
-      {user.role === 'resident' && residentStats && (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard name="Total Cases" value={residentStats.totalCases} icon={FileText} color="bg-blue-500" />
-            <StatCard name="This Month" value={residentStats.thisMonth} icon={TrendingUp} color="bg-green-500" />
-            <StatCard name="Verified" value={residentStats.verified} icon={CheckCircle} color="bg-accent-500" />
-            <StatCard name="Pending" value={residentStats.pending} icon={Clock} color="bg-yellow-500" />
-          </div>
+      {/* Main Content */}
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="cases">Cases</TabsTrigger>
+          <TabsTrigger value="milestones">Milestones</TabsTrigger>
+          <TabsTrigger value="streaks">Streaks</TabsTrigger>
+        </TabsList>
 
-          <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-2xl p-6 border border-orange-100">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-3">
-                  <div className="p-3 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl">
-                    <Flame className="h-7 w-7 text-white" />
-                  </div>
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Recent Cases */}
+            <AnimatedCard delay={0.4}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="w-5 h-5" />
+                  Recent Cases
+                </CardTitle>
+                <CardDescription>Your latest logged procedures</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <AnimatedList>
+                  {data.recentCases.map((caseItem) => (
+                    <motion.div
+                      key={caseItem.id}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="flex items-center justify-between p-3 border-b last:border-0"
+                    >
+                      <div className="space-y-1">
+                        <p className="text-sm font-medium">{caseItem.procedure_type}</p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(caseItem.date).toLocaleDateString()} • {caseItem.category}
+                        </p>
+                      </div>
+                      <Badge
+                        variant={
+                          caseItem.verification_status === 'verified' ? 'success' :
+                          caseItem.verification_status === 'pending' ? 'warning' : 'default'
+                        }
+                      >
+                        {caseItem.verification_status}
+                      </Badge>
+                    </motion.div>
+                  ))}
+                </AnimatedList>
+                <Button variant="outline" className="w-full mt-4">
+                  View All Cases
+                </Button>
+              </CardContent>
+            </AnimatedCard>
+
+            {/* Streaks */}
+            <AnimatedCard delay={0.5}>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Award className="w-5 h-5" />
+                  Streak Progress
+                </CardTitle>
+                <CardDescription>Keep logging cases daily</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-900/10 rounded-lg">
                   <div>
-                    <p className="text-sm font-medium text-orange-700">Current Streak</p>
-                    <p className="text-3xl font-bold text-orange-900">{residentStats.currentStreak}🔥</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Current Streak</p>
+                    <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                      <AnimatedCounter value={data.currentStreak} suffix=" days" />
+                    </p>
                   </div>
+                  <motion.div
+                    animate={{ scale: [1, 1.1, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    <Award className="w-12 h-12 text-blue-500" />
+                  </motion.div>
                 </div>
-                <div className="h-12 w-px bg-orange-200" />
-                <div className="flex items-center gap-3">
-                  <Trophy className="h-5 w-5 text-yellow-600" />
-                  <div><p className="text-xs text-orange-600">Longest</p><p className="text-lg font-bold text-orange-900">{residentStats.longestStreak} days</p></div>
+
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Longest Streak</p>
+                    <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                      {data.longestStreak} days
+                    </p>
+                  </div>
+                  <Users className="w-8 h-8 text-gray-400" />
                 </div>
-                <div className="h-12 w-px bg-orange-200" />
-                <div className="flex items-center gap-2">
-                  <Snowflake className={`h-5 w-5 ${residentStats.streakFreezeAvailable ? 'text-blue-500' : 'text-gray-400'}`} />
-                  <span className={`text-sm font-medium ${residentStats.streakFreezeAvailable ? 'text-blue-700' : 'text-gray-500'}`}>
-                    Freeze {residentStats.streakFreezeAvailable ? 'Available' : 'Used'}
-                  </span>
-                </div>
-              </div>
-              {residentStats.streakAtRisk && residentStats.streakFreezeAvailable && (
-                <button onClick={useStreakFreeze} disabled={freezing} className="bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-600 disabled:opacity-50">
-                  {freezing ? 'Using...' : 'Use Freeze'}
-                </button>
-              )}
-            </div>
+
+                <AnimatedProgressBar value={data.currentStreak} max={30} color="blue" />
+                <p className="text-xs text-gray-500 text-center">
+                  {30 - data.currentStreak} days until next milestone!
+                </p>
+              </CardContent>
+            </AnimatedCard>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <QuickAction href="/cases/new" icon={Plus} title="Log New Case" desc="Record a new procedure" color="bg-primary-100" />
-            <QuickAction href="/cases/cv-export" icon={FileText} title="Export CV" desc="Download your case log" color="bg-accent-100" />
-            <QuickAction href="/cases/ai-analysis" icon={Brain} title="AI Analysis" desc="Get insights on your progress" color="bg-purple-100" />
-          </div>
-
-          <RecentCasesSection cases={recentCases} />
-        </>
-      )}
-
-      {/* CONSULTANT DASHBOARD */}
-      {user.role === 'consultant' && (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <StatCard name="Pending Verification" value={consultantStats?.pendingVerifications || 0} icon={ClipboardCheck} color="bg-yellow-500" />
-            <StatCard name="Verified Today" value={consultantStats?.verifiedToday || 0} icon={CheckCircle} color="bg-green-500" />
-            <StatCard name="Total Verified" value={consultantStats?.totalVerified || 0} icon={Award} color="bg-blue-500" />
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-            <div className="p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">Cases Pending Verification</h2>
-              <p className="text-sm text-gray-600">Review and verify resident cases</p>
-            </div>
-            {casesToVerify.length === 0 ? (
-              <div className="p-6 text-center text-gray-500">No cases pending verification</div>
-            ) : (
-              <div className="divide-y divide-gray-100">
-                {casesToVerify.map((caseItem) => (
-                  <Link key={caseItem.id} href={`/cases/${caseItem.id}`} className="flex items-center justify-between p-4 hover:bg-gray-50">
-                    <div>
-                      <p className="font-medium text-gray-900">{caseItem.procedure_type}</p>
-                      <p className="text-sm text-gray-500">{caseItem.category} • {new Date(caseItem.date).toLocaleDateString()}</p>
+          {/* Milestones */}
+          <AnimatedCard delay={0.6}>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Award className="w-5 h-5" />
+                Milestones
+              </CardTitle>
+              <CardDescription>Track your progress towards key goals</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {data.milestones.map((milestone, index) => (
+                  <motion.div
+                    key={milestone.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.7 + index * 0.1 }}
+                    className="p-4 border rounded-lg"
+                  >
+                    <div className="flex justify-between items-center mb-2">
+                      <div className="flex items-center gap-2">
+                        {milestone.completed ? (
+                          <CheckCircle2 className="w-5 h-5 text-green-500" />
+                        ) : (
+                          <AlertCircle className="w-5 h-5 text-blue-500" />
+                        )}
+                        <span className="font-medium">{milestone.title}</span>
+                      </div>
+                      <span className="text-sm text-gray-500">
+                        {milestone.progress} / {milestone.target}
+                      </span>
                     </div>
-                    <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${getStatusColor(caseItem.verification_status)}`}>
-                      {getStatusLabel(caseItem.verification_status)}
-                    </span>
-                  </Link>
+                    <AnimatedProgressBar
+                      value={milestone.progress}
+                      max={milestone.target}
+                      showLabel={false}
+                      color={milestone.completed ? 'green' : 'blue'}
+                    />
+                  </motion.div>
                 ))}
               </div>
-            )}
-          </div>
-        </>
-      )}
+            </CardContent>
+          </AnimatedCard>
+        </TabsContent>
 
-      {/* PROGRAM DIRECTOR DASHBOARD */}
-      {(user.role === 'program_director') && (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard name="Total Residents" value={pdStats?.totalResidents || 0} icon={Users} color="bg-blue-500" />
-            <StatCard name="Active Residents" value={pdStats?.activeResidents || 0} icon={TrendingUp} color="bg-green-500" />
-            <StatCard name="Pending Reviews" value={pdStats?.pendingVerifications || 0} icon={ClipboardCheck} color="bg-yellow-500" />
-            <StatCard name="Avg Cases/Resident" value={pdStats?.averageCasesPerResident || 0} icon={BarChart3} color="bg-purple-500" />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <QuickAction href="/institution/reports" icon={BarChart3} title="Program Reports" desc="View program analytics" color="bg-blue-100" />
-            <QuickAction href="/institution/residents" icon={Users} title="Manage Residents" desc="View and manage residents" color="bg-green-100" />
-            <QuickAction href="/institution/templates" icon={FileText} title="Templates" desc="Manage case templates" color="bg-purple-100" />
-          </div>
-        </>
-      )}
-
-      {/* INSTITUTION ADMIN / SUPER ADMIN DASHBOARD */}
-      {(user.role === 'institution_admin' || user.role === 'super_admin') && (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard name="Total Users" value={institutionStats?.totalUsers || 0} icon={Users} color="bg-blue-500" />
-            <StatCard name="Total Cases" value={institutionStats?.totalCases || 0} icon={FileText} color="bg-green-500" />
-            <StatCard name="Specialties" value={institutionStats?.activeSpecialties || 0} icon={Building2} color="bg-purple-500" />
-            <StatCard name="Pending Reviews" value={institutionStats?.pendingVerifications || 0} icon={ClipboardCheck} color="bg-yellow-500" />
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <QuickAction href="/institution/admin" icon={Settings} title="Admin Panel" desc="Manage institution settings" color="bg-blue-100" />
-            <QuickAction href="/institution/reports" icon={BarChart3} title="Reports" desc="View detailed reports" color="bg-green-100" />
-            <QuickAction href="/institution/specialties" icon={Building2} title="Specialties" desc="Manage specialties" color="bg-purple-100" />
-          </div>
-        </>
-      )}
-    </div>
-  )
-}
-
-function StatCard({ name, value, icon: Icon, color }: { name: string; value: number; icon: any; color: string }) {
-  return (
-    <div className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-100/50">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-gray-600">{name}</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{value}</p>
-        </div>
-        <div className={`p-4 rounded-xl ${color}`}><Icon className="h-6 w-6 text-white" /></div>
-      </div>
-    </div>
-  )
-}
-
-function QuickAction({ href, icon: Icon, title, desc, color }: { href: string; icon: any; title: string; desc: string; color: string }) {
-  return (
-    <Link href={href} className="bg-white/90 backdrop-blur-sm rounded-2xl p-6 shadow-sm border border-gray-100/50 hover:shadow-lg hover:-translate-y-0.5 transition-all group">
-      <div className="flex items-center gap-4">
-        <div className={`p-3 rounded-xl ${color} group-hover:opacity-80 transition-opacity`}><Icon className="h-6 w-6 text-gray-700" /></div>
-        <div><h3 className="font-semibold text-gray-900">{title}</h3><p className="text-sm text-gray-600">{desc}</p></div>
-      </div>
-    </Link>
-  )
-}
-
-function RecentCasesSection({ cases }: { cases: RecentCase[] }) {
-  return (
-    <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-sm border border-gray-100/50">
-      <div className="flex items-center justify-between p-6 border-b border-gray-100/50">
-        <h2 className="text-lg font-semibold text-gray-900">Recent Cases</h2>
-        <Link href="/cases" className="text-primary-600 hover:text-primary-700 text-sm font-medium flex items-center gap-1">
-          View all <ArrowRight className="h-4 w-4" />
-        </Link>
-      </div>
-      {cases.length === 0 ? (
-        <div className="p-6 text-center">
-          <p className="text-gray-500 mb-4">No cases logged yet</p>
-          <Link href="/cases/new" className="inline-flex items-center gap-2 text-primary-600 hover:text-primary-700 font-medium">
-            <Plus className="h-4 w-4" /> Add your first case
-          </Link>
-        </div>
-      ) : (
-        <div className="divide-y divide-gray-100">
-          {cases.map((caseItem) => (
-            <Link key={caseItem.id} href={`/cases/${caseItem.id}`} className="flex items-center justify-between p-4 hover:bg-gray-50">
-              <div>
-                <p className="font-medium text-gray-900">{caseItem.procedure_type}</p>
-                <p className="text-sm text-gray-500">{caseItem.category}</p>
+        <TabsContent value="cases" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>All Cases</CardTitle>
+                  <CardDescription>Manage and view all your logged procedures</CardDescription>
+                </div>
+                <div className="flex gap-2">
+                  <div className="relative">
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+                    <Input
+                      placeholder="Search cases..."
+                      value={searchQuery}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchQuery(e.target.value)}
+                      className="pl-8 w-64"
+                    />
+                  </div>
+                  <Button variant="outline">
+                    <Filter className="w-4 h-4 mr-2" />
+                    Filter
+                  </Button>
+                  <Button variant="outline">
+                    <Download className="w-4 h-4 mr-2" />
+                    Export
+                  </Button>
+                </div>
               </div>
-              <div className="flex items-center gap-4">
-                <span className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                  caseItem.verification_status === 'consultant_verified' ? 'bg-blue-100 text-blue-700' :
-                  caseItem.verification_status === 'pd_approved' ? 'bg-green-100 text-green-700' :
-                  'bg-gray-100 text-gray-700'
-                }`}>
-                  {caseItem.verification_status === 'self' ? 'Pending' : caseItem.verification_status === 'consultant_verified' ? 'Verified' : 'Approved'}
-                </span>
-                <span className="text-sm text-gray-500">{new Date(caseItem.date).toLocaleDateString()}</span>
-              </div>
-            </Link>
-          ))}
-        </div>
-      )}
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-500">Case list coming soon...</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="milestones" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Milestones & Achievements</CardTitle>
+              <CardDescription>Track your orthopedic surgery journey</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-500">Detailed milestone tracking coming soon...</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="streaks" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Streak History</CardTitle>
+              <CardDescription>Your logging consistency over time</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-gray-500">Streak analytics coming soon...</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

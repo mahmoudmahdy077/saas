@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { logger } from '@/lib/logger'
 
 export async function GET() {
+  let user: any
   try {
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('sb-access-token')?.value
@@ -31,7 +33,8 @@ export async function GET() {
       })
     }
 
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user: authenticatedUser } } = await supabase.auth.getUser()
+    user = authenticatedUser
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -69,7 +72,7 @@ export async function GET() {
       pending: pendingResult.count || 0,
     })
   } catch (error) {
-    console.error('Error fetching stats:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    logger.error('Error fetching stats', error as Error, { route: '/api/cases/stats' })
+    return NextResponse.json({ error: 'Internal server error', code: 'FETCH_STATS_FAILED' }, { status: 500 })
   }
 }

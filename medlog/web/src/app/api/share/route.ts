@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { v4 as uuidv4 } from 'uuid'
+import { logger } from '@/lib/logger'
 
 export async function GET() {
   try {
@@ -42,8 +43,8 @@ export async function GET() {
 
     return NextResponse.json({ links })
   } catch (error) {
-    console.error('Error fetching links:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    logger.error('Error fetching links', error as Error, { route: '/api/share' })
+    return NextResponse.json({ error: 'Internal server error', code: 'FETCH_LINKS_FAILED' }, { status: 500 })
   }
 }
 
@@ -109,8 +110,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ link }, { status: 201 })
   } catch (error) {
-    console.error('Error creating link:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    logger.error('Error creating link', error as Error, { route: '/api/share' })
+    return NextResponse.json({ error: 'Internal server error', code: 'CREATE_LINK_FAILED' }, { status: 500 })
   }
 }
 
@@ -160,7 +161,7 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ message: 'Link deleted' })
   } catch (error) {
-    console.error('Error deleting link:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    logger.error('Error deleting link', error as Error, { route: '/api/share' })
+    return NextResponse.json({ error: 'Internal server error', code: 'DELETE_LINK_FAILED' }, { status: 500 })
   }
 }

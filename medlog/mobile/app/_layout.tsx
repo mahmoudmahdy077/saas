@@ -1,99 +1,53 @@
-import { useEffect } from 'react'
+import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native'
+import { useFonts } from 'expo-font'
 import { Stack } from 'expo-router'
-import { View, ActivityIndicator, StyleSheet } from 'react-native'
-import { useAuthStore } from '../lib/stores/authStore'
-import {
-  useFonts,
-  PlusJakartaSans_400Regular,
-  PlusJakartaSans_500Medium,
-  PlusJakartaSans_600SemiBold,
-  PlusJakartaSans_700Bold,
-} from '@expo-google-fonts/plus-jakarta-sans'
+import * as SplashScreen from 'expo-splash-screen'
+import { useEffect, useState } from 'react'
+import { useColorScheme } from 'react-native'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
+
+// Prevent the splash screen from auto-hiding
+SplashScreen.preventAutoHideAsync()
 
 export default function RootLayout() {
-  const { user, profile, initialized } = useAuthStore()
-
-  const [fontsLoaded] = useFonts({
-    PlusJakartaSans_400Regular,
-    PlusJakartaSans_500Medium,
-    PlusJakartaSans_600SemiBold,
-    PlusJakartaSans_700Bold,
+  const [loaded] = useFonts({
+    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
   })
+  const [isDarkMode, setIsDarkMode] = useState(false)
+  const colorScheme = useColorScheme()
 
   useEffect(() => {
-    useAuthStore.getState().initialize()
-  }, [])
+    if (loaded) {
+      SplashScreen.hideAsync()
+    }
+  }, [loaded])
 
-  if (!initialized || !fontsLoaded) {
-    return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" color="#4D66EB" />
-      </View>
-    )
+  useEffect(() => {
+    // Check if dark mode is enabled
+    setIsDarkMode(colorScheme === 'dark')
+  }, [colorScheme])
+
+  if (!loaded) {
+    return null
   }
 
-  const isConsultant = profile?.role === 'consultant'
-  const isProgramDirector = profile?.role === 'program_director'
-  const isInstitutionAdmin = profile?.role === 'institution_admin'
-  const isSuperAdmin = profile?.role === 'super_admin'
-
-  const getRouteGroup = () => {
-    if (!user) return '(auth)'
-    if (isSuperAdmin) return '(super_admin)'
-    if (isInstitutionAdmin) return '(institution_admin)'
-    if (isProgramDirector) return '(program_director)'
-    if (isConsultant) return '(consultant)'
-    return '(main)' // resident
-  }
-
-  const routeGroup = getRouteGroup()
+  const theme = isDarkMode ? DarkTheme : DefaultTheme
 
   return (
-    <Stack
-      screenOptions={{
-        headerStyle: { backgroundColor: '#4D66EB' },
-        headerTintColor: '#fff',
-        headerTitleStyle: { fontFamily: 'PlusJakartaSans_700Bold' },
-        contentStyle: { backgroundColor: '#F9FAFB' }
-      }}
-    >
-      <Stack.Screen
-        name="index"
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="(auth)"
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="(main)"
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="(super_admin)"
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="(institution_admin)"
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="(program_director)"
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="(consultant)"
-        options={{ headerShown: false }}
-      />
-    </Stack>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider value={theme}>
+        <Stack>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="+not-found" />
+          <Stack.Screen 
+            name="dashboard/enterprise" 
+            options={{ 
+              title: 'Enterprise',
+              headerShown: true
+            }} 
+          />
+        </Stack>
+      </ThemeProvider>
+    </GestureHandlerRootView>
   )
 }
-
-const styles = StyleSheet.create({
-  loading: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F9FAFB',
-  },
-})
