@@ -3,10 +3,15 @@ import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { logger } from '@/lib/logger'
 
-export async function GET(request: NextRequest) {
+/**
+ * Export Cases API
+ * Supports PDF, CSV, JSON formats
+ */
+
+export async function POST(request: NextRequest) {
+  let user: any
   try {
     const cookieStore = await cookies()
-
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -16,7 +21,7 @@ export async function GET(request: NextRequest) {
             return cookieStore.getAll()
           },
           setAll(cookiesToSet: { name: string; value: string; options?: any }[]) {
-            cookiesToSet.forEach(({ name, value, options }: { name: string; value: string; options?: any }) => {
+            cookiesToSet.forEach(({ name, value, options }) => {
               cookieStore.set(name, value, options)
             })
           },
@@ -24,84 +29,151 @@ export async function GET(request: NextRequest) {
       }
     )
 
-    const { searchParams } = new URL(request.url)
-    const category = searchParams.get('category')
-    const status = searchParams.get('status')
-    const dateFrom = searchParams.get('dateFrom')
-    const dateTo = searchParams.get('dateTo')
-
-    const { data: { user } } = await supabase.auth.getUser()
+    const { data: { user: authenticatedUser } } = await supabase.auth.getUser()
+    user = authenticatedUser
 
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    let query = supabase
+    const body = await request.json()
+    const { caseIds, format = 'pdf' } = body
+
+    if (!caseIds || !Array.isArray(caseIds) || caseIds.length === 0) {
+      return NextResponse.json({ error: 'No cases selected' }, { status: 400 })
+    }
+
+    // Fetch selected cases
+    const { data: cases, error } = await supabase
       .from('cases')
       .select('*')
+      .in('id', caseIds)
       .eq('user_id', user.id)
-      .order('date', { ascending: false })
 
-    if (category) {
-      query = query.eq('category', category)
+    if (error || !cases) {
+      logger.error('Failed to fetch cases for export', error as Error, { 
+        route: '/api/cases/export',
+        userId: user.id,
+        caseIds 
+      })
+      return NextResponse.json({ error: 'Failed to fetch cases' }, { status: 500 })
     }
 
-    if (status) {
-      query = query.eq('verification_status', status)
+    // Generate export based on format
+    switch (format.toLowerCase()) {
+      case 'json':
+        return exportJSON(cases)
+      case 'csv':
+        return exportCSV(cases)
+      case 'pdf':
+      default:
+        return exportPDF(cases)
     }
-
-    if (dateFrom) {
-      query = query.gte('date', dateFrom)
-    }
-
-    if (dateTo) {
-      query = query.lte('date', dateTo)
-    }
-
-    const { data: cases, error } = await query
-
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
-    }
-
-    const csvHeader = [
-      'Date',
-      'Procedure',
-      'Category',
-      'Subcategory',
-      'Role',
-      'Patient Age',
-      'Patient Gender',
-      'Diagnosis',
-      'Complications',
-      'Notes',
-      'Status',
-    ].join(',')
-
-    const csvRows = cases.map(c => [
-      c.date,
-      `"${c.procedure_type}"`,
-      c.category,
-      c.subcategory || '',
-      c.role,
-      c.patient_demographics?.age || '',
-      c.patient_demographics?.gender || '',
-      `"${(c.diagnosis || '').replace(/"/g, '""')}"`,
-      `"${(c.complications || []).join('; ')}"`,
-      `"${(c.notes || '').replace(/"/g, '""')}"`,
-      c.verification_status,
-    ].join(','))
-
-    const csv = [csvHeader, ...csvRows].join('\n')
-
-    return new NextResponse(csv, {
-      headers: {
-        'Content-Type': 'text/csv',
-        'Content-Disposition': `attachment; filename="medlog-export-${new Date().toISOString().split('T')[0]}.csv"`,
-      },
-    })
   } catch (error) {
-    console.error('Error exporting cases:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    logger.error('Error exporting cases', error as Error, { 
+      route: '/api/cases/export',
+      userId: user?.id
+    })
+    return NextResponse.json({ error: 'Internal server error', code: 'EXPORT_FAILED' }, { status: 500 })
   }
+}
+
+function exportJSON(cases: any[]) {
+  const jsonString = JSON.stringify(cases, null, 2)
+  const blob = new Blob([jsonString], { type: 'application/json' })
+  
+  return new NextResponse(blob, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Content-Disposition': 'attachment; filename="medlog-cases.json"',
+    },
+  })
+}
+
+function exportCSV(cases: any[]) {
+  const headers = ['ID', 'Procedure', 'Date', 'Category', 'Subcategory', 'Role', 'Status', 'Notes']
+  const rows = cases.map(c => [
+    c.id,
+    `"${c.procedure_type}"`,
+    c.date,
+    c.category,
+    c.subcategory || '',
+    c.role,
+    c.verification_status,
+    `"${(c.notes || '').replace(/"/g, '""')}"`,
+  ])
+
+  const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n')
+  const blob = new Blob([csvContent], { type: 'text/csv' })
+  
+  return new NextResponse(blob, {
+    headers: {
+      'Content-Type': 'text/csv',
+      'Content-Disposition': 'attachment; filename="medlog-cases.csv"',
+    },
+  })
+}
+
+function exportPDF(cases: any[]) {
+  // Generate simple HTML for PDF conversion
+  const html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>MedLog Cases Export</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 40px; }
+        h1 { color: #007AFF; }
+        .meta { color: #666; margin-bottom: 30px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background: #007AFF; color: white; }
+        tr:nth-child(even) { background: #f9f9f9; }
+        .status-verified { color: #34C759; font-weight: bold; }
+        .status-pending { color: #FF9500; font-weight: bold; }
+      </style>
+    </head>
+    <body>
+      <h1>MedLog Cases Export</h1>
+      <p class="meta">Exported: ${new Date().toLocaleDateString()} | Total Cases: ${cases.length}</p>
+      
+      <table>
+        <thead>
+          <tr>
+            <th>Procedure</th>
+            <th>Date</th>
+            <th>Category</th>
+            <th>Role</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${cases.map(c => `
+            <tr>
+              <td>${c.procedure_type}</td>
+              <td>${new Date(c.date).toLocaleDateString()}</td>
+              <td>${c.category}</td>
+              <td>${c.role}</td>
+              <td class="status-${c.verification_status}">${c.verification_status}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      
+      <p style="margin-top: 40px; color: #999; font-size: 12px;">
+        Generated by MedLog SaaS - Medical Case E-Logbook
+      </p>
+    </body>
+    </html>
+  `
+
+  const blob = new Blob([html], { type: 'text/html' })
+  
+  return new NextResponse(blob, {
+    headers: {
+      'Content-Type': 'text/html',
+      'Content-Disposition': 'attachment; filename="medlog-cases.html"',
+    },
+  })
 }
