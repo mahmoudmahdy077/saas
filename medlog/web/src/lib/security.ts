@@ -60,8 +60,5 @@ export function generateCSRFToken(): string {
 // Validate CSRF token
 export function validateCSRFToken(token: string, storedToken: string): boolean {
   if (!token || !storedToken) return false
-  return crypto.timingSafeEqual(
-    Buffer.from(token),
-    Buffer.from(storedToken)
-  )
+  return token === storedToken
 }

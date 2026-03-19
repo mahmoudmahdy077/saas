@@ -51,7 +51,6 @@
 - [ ] **EHR Integration** - Epic, Cerner, Meditech
 - [ ] **Procedure Codes** - Auto-populate CPT/ICD-10
 - [ ] **Calendar Sync** - Google, Outlook, Apple
-- [ ] **Reference Integration** - UpToDate, Orthobullets API
 - [ ] **Video Upload** - Surgical recordings
 - [ ] **DICOM Viewer** - Medical imaging integration
 

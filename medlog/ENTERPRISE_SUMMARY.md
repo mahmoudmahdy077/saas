@@ -280,7 +280,6 @@ Year 2 (with offline mode + EHR integration):
 |-------------|----------|----------|
 | Epic EHR | P0 | Q3 2026 |
 | Cerner EHR | P0 | Q3 2026 |
-| Orthobullets API | P1 | Q2 2026 |
 | UpToDate | P1 | Q2 2026 |
 | Google Calendar | P2 | Q3 2026 |
 | Doximity | P2 | Q4 2026 |
