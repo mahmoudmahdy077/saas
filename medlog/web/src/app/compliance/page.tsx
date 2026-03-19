@@ -3,6 +3,7 @@
 import { PageTransition, SlideUp } from '@/components/ui/page-transition'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { CheckCircle, Shield, FileCheck } from 'lucide-react'
 
 export default function CompliancePage() {
