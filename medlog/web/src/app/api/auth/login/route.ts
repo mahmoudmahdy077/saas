@@ -1,21 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
-import { rateLimit } from '@/lib/security'
+
 
 export async function POST(request: NextRequest) {
-  const ip = request.headers.get('x-forwarded-for') ||
-    request.headers.get('x-real-ip') ||
-    'unknown'
-
-  const rateLimitResult = rateLimit(`login:${ip}`, 5, 60000)
-  if (!rateLimitResult.success) {
-    return NextResponse.json(
-      { error: 'Too many login attempts. Please try again in 1 minute.' },
-      { status: 429 }
-    )
-  }
-
   try {
     const { email, password } = await request.json()
 

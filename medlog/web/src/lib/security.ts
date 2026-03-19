@@ -1,165 +1,67 @@
-import { NextRequest, NextResponse } from 'next/server'
-
-export interface RateLimitResult {
-  success: boolean
-  remaining: number
-  resetAt: number
-}
+import { NextResponse } from 'next/server'
 
 const rateLimitStore = new Map<string, { count: number; resetAt: number }>()
 
-export function rateLimit(
-  key: string,
-  limit: number = 100,
-  windowMs: number = 60000
-): RateLimitResult {
+export function rateLimit(key: string, limit: number = 100, windowMs: number = 60000): boolean {
   const now = Date.now()
   const record = rateLimitStore.get(key)
-  
   if (!record || now > record.resetAt) {
     rateLimitStore.set(key, { count: 1, resetAt: now + windowMs })
-    return { success: true, remaining: limit - 1, resetAt: now + windowMs }
+    return true
   }
-  
-  if (record.count >= limit) {
-    return { success: false, remaining: 0, resetAt: record.resetAt }
-  }
-  
+  if (record.count >= limit) return false
   record.count++
-  return { success: true, remaining: limit - record.count, resetAt: record.resetAt }
+  return true
 }
 
-export function applyRateLimit(
-  request: NextRequest,
-  limit: number = 100,
-  windowMs: number = 60000
-): NextResponse | null {
-  const ip = request.headers.get('x-forwarded-for') || 
-             request.headers.get('x-real-ip') || 
-             'unknown'
-  const key = `${ip}:${request.nextUrl.pathname}`
-  
-  const result = rateLimit(key, limit, windowMs)
-  
-  if (!result.success) {
-    const response = NextResponse.json(
-      { error: 'Too many requests. Please try again later.' },
-      { status: 429 }
-    )
-    response.headers.set('X-RateLimit-Limit', limit.toString())
-    response.headers.set('X-RateLimit-Remaining', '0')
-    response.headers.set('X-RateLimit-Reset', result.resetAt.toString())
-    return response
-  }
-  
-  return null
+// Security headers for all responses
+export function withSecurityHeaders(response: NextResponse) {
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set('X-Frame-Options', 'DENY')
+  response.headers.set('X-XSS-Protection', '1; mode=block')
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+  response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
+  response.headers.set('Content-Security-Policy', [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src 'self' data: blob: https:",
+    "connect-src 'self' https://api.stripe.com",
+    "frame-src https://js.stripe.com",
+  ].join('; '))
+  return response
 }
 
-export function sanitizeInput(input: any): any {
-  if (typeof input === 'string') {
-    return input
-      .replace(/[<>]/g, '')
-      .replace(/javascript:/gi, '')
-      .replace(/on\w+=/gi, '')
-      .trim()
-  }
-  
-  if (Array.isArray(input)) {
-    return input.map(item => sanitizeInput(item))
-  }
-  
-  if (input && typeof input === 'object') {
-    const sanitized: Record<string, any> = {}
-    for (const [key, value] of Object.entries(input)) {
-      sanitized[key] = sanitizeInput(value)
-    }
-    return sanitized
-  }
-  
+// Input sanitization
+export function sanitizeInput(input: string, maxLength: number = 1000): string {
   return input
+    .replace(/[<>]/g, '')
+    .substring(0, maxLength)
+    .trim()
 }
 
-export function validateUUID(id: string): boolean {
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-  return uuidRegex.test(id)
-}
-
-export function validateEmail(email: string): boolean {
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return emailRegex.test(email)
-}
-
-export function validateDate(dateStr: string): boolean {
-  const date = new Date(dateStr)
-  return !isNaN(date.getTime())
-}
-
-export function validateNumericRange(value: number, min: number, max: number): boolean {
-  return typeof value === 'number' && value >= min && value <= max
-}
-
-export function sanitizeSQL(input: string): string {
-  if (typeof input !== 'string') return ''
-  return input.replace(/'/g, "''").replace(/;/g, '')
-}
-
-export function escapeHTML(str: string): string {
-  const htmlEscapes: Record<string, string> = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#x27;',
-    '/': '&#x2F;'
-  }
-  return str.replace(/[&<>"'/]/g, char => htmlEscapes[char] || char)
-}
-
+// XSS prevention
 export function stripXSS(input: string): string {
   return input
-    .replace(/<\s*script[^>]*>(.*?)<\s*\/\s*script\s*>/gi, '')
-    .replace(/<\s*iframe[^>]*>(.*?)<\s*\/\s*iframe\s*>/gi, '')
-    .replace(/<\s*object[^>]*>(.*?)<\s*\/\s*object\s*>/gi, '')
-    .replace(/javascript:/gi, '')
-    .replace(/on\w+\s*=/gi, '')
-    .replace(/data:/gi, '')
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '')
+    .replace(/on\w+\s*=\s*["'][^"']*["']/gi, '')
 }
 
-export function validateAPIKey(apiKey: string): boolean {
-  if (!apiKey || apiKey.length < 32) return false
-  const validKeyRegex = /^[a-zA-Z0-9_-]{32,}$/
-  return validKeyRegex.test(apiKey)
+// CSRF token generation
+export function generateCSRFToken(): string {
+  return Array.from(crypto.getRandomValues(new Uint8Array(32)))
+    .map(b => b.toString(16).padStart(2, '0'))
+    .join('')
 }
 
-export function generateSecureToken(length: number = 32): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-  const array = new Uint8Array(length)
-  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-    crypto.getRandomValues(array)
-  } else {
-    for (let i = 0; i < length; i++) {
-      array[i] = Math.floor(Math.random() * 256)
-    }
-  }
-  return Array.from(array, byte => chars[byte % chars.length]).join('')
-}
-
-export function hashPassword(password: string): string {
-  const crypto = require('crypto')
-  return crypto.createHash('sha256').update(password).digest('hex')
-}
-
-export const SECURITY_HEADERS = {
-  'X-Content-Type-Options': 'nosniff',
-  'X-Frame-Options': 'DENY',
-  'X-XSS-Protection': '1; mode=block',
-  'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';",
-}
-
-export function addSecurityHeaders(response: NextResponse): NextResponse {
-  for (const [header, value] of Object.entries(SECURITY_HEADERS)) {
-    response.headers.set(header, value)
-  }
-  return response
+// Validate CSRF token
+export function validateCSRFToken(token: string, storedToken: string): boolean {
+  if (!token || !storedToken) return false
+  return crypto.timingSafeEqual(
+    Buffer.from(token),
+    Buffer.from(storedToken)
+  )
 }

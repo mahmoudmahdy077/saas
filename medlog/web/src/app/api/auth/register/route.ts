@@ -1,21 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
-import { rateLimit, stripXSS } from '@/lib/security'
 
 export async function POST(request: NextRequest) {
-  const ip = request.headers.get('x-forwarded-for') || 
-             request.headers.get('x-real-ip') || 
-             'unknown'
-  
-  const rateLimitResult = rateLimit(`register:${ip}`, 3, 60000)
-  if (!rateLimitResult.success) {
-    return NextResponse.json(
-      { error: 'Too many registration attempts. Please try again in 1 minute.' },
-      { status: 429 }
-    )
-  }
-
   try {
     const body = await request.json()
     let { email, password, fullName, specialty, role = 'resident' } = body

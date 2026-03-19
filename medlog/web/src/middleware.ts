@@ -1,119 +1,48 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
-import { NextResponse, type NextRequest } from 'next/server'
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
-const SECURITY_HEADERS = {
-  'X-Content-Type-Options': 'nosniff',
-  'X-Frame-Options': 'DENY',
-  'X-XSS-Protection': '1; mode=block',
-  'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
-  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-  'Content-Security-Policy': [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-    "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: blob: https:",
-    "connect-src 'self' https://api.stripe.com https://api.openai.com https://api.anthropic.com",
-    "frame-src https://js.stripe.com",
-  ].join('; '),
+const rateLimitStore = new Map<string, { count: number; resetAt: number }>()
+
+const RATE_LIMITS = {
+  api: { limit: 100, windowMs: 60000 },
+  auth: { limit: 5, windowMs: 300000 },
+  export: { limit: 10, windowMs: 3600000 },
 }
 
-export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({
-    request: {
-      headers: request.headers,
-    },
-  })
-
-  for (const [header, value] of Object.entries(SECURITY_HEADERS)) {
-    response.headers.set(header, value)
+export function middleware(request: NextRequest) {
+  const ip = request.headers.get('x-forwarded-for') || 'unknown'
+  const path = request.nextUrl.pathname
+  
+  // Skip rate limiting for static files
+  if (path.startsWith('/_next') || path.startsWith('/static')) {
+    return NextResponse.next()
   }
 
-  // Protected route patterns
-  const protectedPatterns = [
-    '/dashboard',
-    '/cases',
-    '/settings',
-    '/institution',
-    '/superadmin'
-  ]
+  // Determine rate limit based on path
+  let limit = RATE_LIMITS.api
+  if (path.includes('/auth')) limit = RATE_LIMITS.auth
+  if (path.includes('/export')) limit = RATE_LIMITS.export
 
-  const isProtectedRoute = protectedPatterns.some(pattern =>
-    request.nextUrl.pathname === pattern || request.nextUrl.pathname.startsWith(pattern + '/')
-  )
+  const key = `${ip}:${path}`
+  const now = Date.now()
+  const record = rateLimitStore.get(key)
 
-  if (!isProtectedRoute) return response
-
-  const supabase = createServerClient(
-    process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value,
-            ...options,
-          })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          })
-        },
-        remove(name: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value: '',
-            ...options,
-          })
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          })
-          response.cookies.set({
-            name,
-            value: '',
-            ...options,
-          })
-        },
-      },
-    }
-  )
-
-  const { data: { user } } = await supabase.auth.getUser()
-  const accessToken = request.cookies.get('sb-access-token')?.value
-
-  if (!user && !accessToken) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
+  if (!record || now > record.resetAt) {
+    rateLimitStore.set(key, { count: 1, resetAt: now + limit.windowMs })
+    return NextResponse.next()
   }
 
-  return response
+  if (record.count >= limit.limit) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded', code: 'RATE_LIMITED' },
+      { status: 429 }
+    )
+  }
+
+  record.count++
+  return NextResponse.next()
 }
 
 export const config = {
-  matcher: [
-    '/dashboard',
-    '/dashboard/:path*',
-    '/cases',
-    '/cases/:path*',
-    '/settings',
-    '/settings/:path*',
-    '/institution',
-    '/institution/:path*',
-    '/superadmin',
-    '/superadmin/:path*'
-  ],
+  matcher: '/api/:path*',
 }
