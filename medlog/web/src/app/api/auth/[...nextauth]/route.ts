@@ -1,31 +1,47 @@
 import NextAuth from "next-auth"
 import { NextAuthOptions } from "next-auth"
-import { SupabaseAdapter } from "next-auth-supabase"
+import CredentialsProvider from "next-auth/providers/credentials"
 import { getEnv } from "@/lib/env"
+import { createClient } from "@supabase/supabase-js"
 
 const env = getEnv()
 
 export const authOptions: NextAuthOptions = {
-  adapter: SupabaseAdapter({
-    url: env.NEXT_PUBLIC_SUPABASE_URL,
-    secret: env.SUPABASE_SERVICE_ROLE_KEY,
-  }),
   providers: [
-    {
-      id: "supabase",
-      name: "Supabase",
-      type: "oauth",
-      wellKnown: `${env.NEXT_PUBLIC_SUPABASE_URL}/auth/v1/.well-known/openid-configuration`,
-      authorization: { params: { scope: "openid email profile" } },
-      clientId: env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      clientSecret: env.SUPABASE_SERVICE_ROLE_KEY,
-      idToken: true,
-    },
+    CredentialsProvider({
+      name: "Credentials",
+      credentials: {
+        email: { label: "Email", type: "email" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          return null
+        }
+
+        const supabase = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.NEXT_PUBLIC_SUPABASE_ANON_KEY)
+        
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email: credentials.email,
+          password: credentials.password,
+        })
+
+        if (error || !data.user) {
+          return null
+        }
+
+        return {
+          id: data.user.id,
+          email: data.user.email || '',
+          name: data.user.user_metadata?.name,
+        }
+      }
+    }),
   ],
   callbacks: {
     async session({ session, token }) {
       if (token.sub && session.user) {
-        session.user.id = token.sub
+        (session.user as any).id = token.sub
       }
       return session
     },
@@ -43,7 +59,7 @@ export const authOptions: NextAuthOptions = {
   },
   session: {
     strategy: "jwt",
-    maxAge: 24 * 60 * 60, // 24 hours
+    maxAge: 24 * 60 * 60,
   },
   secret: env.SUPABASE_SERVICE_ROLE_KEY,
 }

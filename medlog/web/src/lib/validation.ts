@@ -101,6 +101,6 @@ export function validate<T extends z.ZodType>(schema: T, data: unknown): z.infer
   return schema.parse(data);
 }
 
-export function validateSafe<T extends z.ZodType>(schema: T, data: unknown): z.SafeParseReturnType<unknown, z.infer<T>> {
+export function validateSafe<T extends z.ZodType>(schema: T, data: unknown) {
   return schema.safeParse(data);
 }

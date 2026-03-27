@@ -16,6 +16,7 @@ export type AuditAction =
   | 'CASE_DELETE'
   | 'CASE_PUBLISH'
   | 'CASE_ARCHIVE'
+  | 'CASE_LIST'
   | 'DATA_EXPORT'
   | 'DATA_IMPORT'
   | 'SETTINGS_UPDATE'
