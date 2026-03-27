@@ -96,7 +96,6 @@ export default function DashboardLayout({
       await fetch('/api/auth/logout', { method: 'POST' })
       router.push('/login')
     } catch (error) {
-      console.error('Logout failed:', error)
     }
   }
 
@@ -108,25 +107,20 @@ export default function DashboardLayout({
         const response = await fetch('/api/auth/user', { credentials: 'include' })
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}))
-          console.error('Auth check failed:', response.status, errorData)
 
           setIsRedirecting(true)
           window.location.href = '/login'
           return
         }
         const data = await response.json()
-        console.log('User data:', data)
-        console.log('Profile:', data.profile)
         setUserData(data)
         // Use profile if available, otherwise use user data
         const userProfile = data.profile ? { 
           full_name: data.profile.full_name || data.user?.email?.split('@')[0] || 'User', 
           role: data.profile.role || 'resident' 
         } : { full_name: data.user?.email?.split('@')[0] || 'User', role: 'resident' }
-        console.log('Setting user:', userProfile)
         setUser(userProfile)
       } catch (error) {
-        console.error('Failed to fetch user:', error)
         setIsRedirecting(true)
         window.location.href = '/login'
       } finally {

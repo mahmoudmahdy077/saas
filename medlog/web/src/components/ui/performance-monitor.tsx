@@ -47,7 +47,6 @@ export function PerformanceMonitor() {
           })
           fcp.observe({ type: 'paint', buffered: true })
         } catch (e) {
-          console.warn('FCP observer failed:', e)
         }
 
         // LCP
@@ -60,7 +59,6 @@ export function PerformanceMonitor() {
           })
           lcp.observe({ type: 'largest-contentful-paint', buffered: true })
         } catch (e) {
-          console.warn('LCP observer failed:', e)
         }
       }
 

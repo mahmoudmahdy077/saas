@@ -41,7 +41,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ preferences: result.rows[0] })
   } catch (error: any) {
-    console.error('Error fetching notification preferences:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
@@ -98,7 +97,6 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ preferences: result.rows[0] })
   } catch (error: any) {
-    console.error('Error updating notification preferences:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

@@ -101,7 +101,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       meta: { resourceType: 'User', created: user.created_at }
     })
   } catch (error: any) {
-    console.error('SCIM GET Error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -153,7 +152,6 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       meta: { resourceType: 'User' }
     })
   } catch (error: any) {
-    console.error('SCIM PUT Error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -185,7 +183,6 @@ export async function DELETE(request: NextRequest, { params }: { params: Promise
 
     return new NextResponse(null, { status: 204 })
   } catch (error: any) {
-    console.error('SCIM DELETE Error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -232,7 +229,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       meta: { resourceType: 'User' }
     })
   } catch (error: any) {
-    console.error('SCIM PATCH Error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

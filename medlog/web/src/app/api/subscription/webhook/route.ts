@@ -32,11 +32,9 @@ export async function POST(request: NextRequest) {
     try {
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
     } catch (err: any) {
-      console.error('Webhook signature verification failed:', err.message)
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
     }
 
-    console.log('Processing Stripe event:', event.type)
 
     switch (event.type) {
       case 'checkout.session.completed': {
@@ -70,13 +68,11 @@ export async function POST(request: NextRequest) {
       }
 
       default:
-        console.log('Unhandled event type:', event.type)
     }
 
     return NextResponse.json({ received: true })
 
   } catch (error: any) {
-    console.error('Webhook error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
@@ -124,7 +120,6 @@ async function handleCheckoutComplete(session: Stripe.Checkout.Session) {
     WHERE stripe_customer_id = $3
   `, [subscriptionId, planName, customerId])
 
-  console.log(`Checkout completed for customer ${customerId}, plan: ${planName}`)
 }
 
 async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
@@ -157,7 +152,6 @@ async function handleSubscriptionUpdate(subscription: Stripe.Subscription) {
     WHERE stripe_subscription_id = $4
   `, [dbStatus, currentPeriodStart, currentPeriodEnd, subscriptionId])
 
-  console.log(`Subscription ${subscriptionId} updated to status: ${status}`)
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
@@ -182,7 +176,6 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     WHERE stripe_subscription_id = $1
   `, [subscriptionId])
 
-  console.log(`Subscription ${subscriptionId} cancelled`)
 }
 
 async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
@@ -218,7 +211,6 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
     WHERE stripe_customer_id = $1
   `, [customerId])
 
-  console.log(`Invoice ${invoiceId} paid for customer ${customerId}, institution: ${institutionId}`)
 }
 
 async function handlePaymentFailed(invoice: Stripe.Invoice) {
@@ -251,5 +243,4 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
     WHERE stripe_customer_id = $1
   `, [customerId])
 
-  console.log(`Invoice ${invoiceId} payment failed for customer ${customerId}`)
 }

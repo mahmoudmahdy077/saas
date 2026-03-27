@@ -85,7 +85,6 @@ export default function EnterpriseDashboardV2() {
       const result = await response.json()
       setData(result)
     } catch (error) {
-      console.error('Failed to fetch dashboard data:', error)
     } finally {
       setLoading(false)
     }
@@ -103,7 +102,6 @@ export default function EnterpriseDashboardV2() {
       a.download = `medlog-${type}-${new Date().toISOString().split('T')[0]}.pdf`
       a.click()
     } catch (error) {
-      console.error('Export failed:', error)
     }
   }
 

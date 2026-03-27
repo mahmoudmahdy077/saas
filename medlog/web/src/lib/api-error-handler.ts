@@ -43,7 +43,7 @@ export function withErrorHandler<T extends (...args: any[]) => Promise<any>>(han
       }
       
       // Log error for monitoring
-      console.error('API Error:', error);
+      
       
       return createErrorResponse(
         error instanceof Error ? error : new Error('Unknown error'),

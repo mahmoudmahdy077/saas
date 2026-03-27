@@ -48,7 +48,6 @@ Provide a 2-3 sentence educational insight.`
         return data.choices[0]?.message?.content || 'AI summary unavailable.'
       }
     } catch (error) {
-      console.error('OpenAI API error:', error)
     }
   }
 
@@ -97,7 +96,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ summary: aiSummary })
   } catch (error) {
-    console.error('AI summary error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

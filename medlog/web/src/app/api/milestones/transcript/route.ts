@@ -82,7 +82,6 @@ export async function GET(request: NextRequest) {
       all_assessments: assessmentsResult.rows
     })
   } catch (error: any) {
-    console.error('Error fetching milestone transcript:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
@@ -119,7 +118,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ assessment: result.rows[0] })
   } catch (error: any) {
-    console.error('Error creating milestone assessment:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

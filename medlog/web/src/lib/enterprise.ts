@@ -104,10 +104,8 @@ export async function logAuditEvent(data: {
     })
     
     if (!response.ok) {
-      console.error('Audit log failed:', await response.text())
     }
   } catch (error) {
-    console.error('Failed to log audit event:', error)
   }
 }
 

@@ -95,7 +95,6 @@ export default function PortfolioPage() {
         setStats(data)
       }
     } catch (error) {
-      console.error('Failed to fetch portfolio:', error)
     } finally {
       setLoading(false)
     }
@@ -116,7 +115,6 @@ export default function PortfolioPage() {
       setTimeout(() => setSaved(false), 3000)
       fetchPortfolio()
     } catch (error) {
-      console.error('Failed to save portfolio:', error)
     } finally {
       setSaving(false)
     }
@@ -135,7 +133,6 @@ export default function PortfolioPage() {
       setPublicationForm({ title: '', type: 'publication', journal: '', date: '', description: '' })
       fetchPortfolio()
     } catch (error) {
-      console.error('Failed to add publication:', error)
     }
   }
 
@@ -148,7 +145,6 @@ export default function PortfolioPage() {
       })
       fetchPortfolio()
     } catch (error) {
-      console.error('Failed to delete publication:', error)
     }
   }
 

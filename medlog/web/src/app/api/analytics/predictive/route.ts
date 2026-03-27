@@ -178,7 +178,6 @@ export async function GET(request: NextRequest) {
       }
     })
   } catch (error: any) {
-    console.error('Error generating predictions:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

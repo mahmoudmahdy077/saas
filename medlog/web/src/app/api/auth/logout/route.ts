@@ -26,7 +26,6 @@ export async function POST() {
     const { error } = await supabase.auth.signOut()
 
     if (error) {
-      console.error('Sign out error:', error.message)
       // Continue to clear cookies anyway
     }
 
@@ -43,7 +42,6 @@ export async function POST() {
 
     return response
   } catch (error) {
-    console.error('Error logging out:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -60,7 +60,6 @@ export default function ExportPage() {
         setCases(data.cases || [])
       }
     } catch (error) {
-      console.error('Failed to fetch cases:', error)
     } finally {
       setLoading(false)
     }
@@ -89,7 +88,6 @@ export default function ExportPage() {
         document.body.removeChild(a)
       }
     } catch (error) {
-      console.error('Export failed:', error)
     } finally {
       setExporting(false)
     }

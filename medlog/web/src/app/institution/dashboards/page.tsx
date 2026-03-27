@@ -80,7 +80,6 @@ export default function DashboardsPage() {
         setDashboards(data.dashboards)
       }
     } catch (error) {
-      console.error('Failed to fetch dashboards:', error)
     } finally {
       setLoading(false)
     }
@@ -121,7 +120,6 @@ export default function DashboardsPage() {
         fetchDashboards()
       }
     } catch (error) {
-      console.error('Failed to save dashboard:', error)
     } finally {
       setSaving(false)
     }
@@ -141,7 +139,6 @@ export default function DashboardsPage() {
         fetchDashboards()
       }
     } catch (error) {
-      console.error('Failed to delete dashboard:', error)
     }
   }
 
@@ -157,7 +154,6 @@ export default function DashboardsPage() {
         fetchDashboards()
       }
     } catch (error) {
-      console.error('Failed to set default:', error)
     }
   }
 

@@ -68,7 +68,6 @@ export default function NotificationDropdown() {
                 setNotifications(data.notifications || [])
             }
         } catch (error) {
-            console.error('Failed to fetch notifications:', error)
         } finally {
             setLoading(false)
         }
@@ -86,7 +85,6 @@ export default function NotificationDropdown() {
                 prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
             )
         } catch (error) {
-            console.error('Failed to mark notification as read:', error)
         }
     }
 

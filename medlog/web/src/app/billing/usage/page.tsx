@@ -50,7 +50,6 @@ export default function UsageBillingPage() {
         setData(result)
       }
     } catch (error) {
-      console.error('Failed to fetch usage:', error)
     } finally {
       setLoading(false)
     }

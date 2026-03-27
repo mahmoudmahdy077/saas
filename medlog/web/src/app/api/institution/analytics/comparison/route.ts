@@ -148,7 +148,6 @@ export async function GET(request: NextRequest) {
       period
     })
   } catch (error: any) {
-    console.error('Error fetching comparison:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

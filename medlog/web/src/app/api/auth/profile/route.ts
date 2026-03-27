@@ -65,7 +65,6 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ profile: data })
   } catch (error) {
-    console.error('Error updating profile:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

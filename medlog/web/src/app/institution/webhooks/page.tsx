@@ -63,7 +63,6 @@ export default function WebhooksPage() {
         setWebhooks(data.webhooks || [])
       }
     } catch (error) {
-      console.error('Failed to fetch webhooks:', error)
     } finally {
       setLoading(false)
     }
@@ -92,7 +91,6 @@ export default function WebhooksPage() {
         setFormData({ url: '', events: [] })
       }
     } catch (error) {
-      console.error('Failed to create webhook:', error)
     } finally {
       setSaving(false)
     }
@@ -108,7 +106,6 @@ export default function WebhooksPage() {
       })
       fetchWebhooks()
     } catch (error) {
-      console.error('Failed to toggle webhook:', error)
     }
   }
 
@@ -142,7 +139,6 @@ export default function WebhooksPage() {
       })
       fetchWebhooks()
     } catch (error) {
-      console.error('Failed to delete webhook:', error)
     }
   }
 

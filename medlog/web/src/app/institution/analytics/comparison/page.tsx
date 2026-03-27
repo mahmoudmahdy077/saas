@@ -55,7 +55,6 @@ export default function ResidentComparisonPage() {
         setData(result)
       }
     } catch (error) {
-      console.error('Failed to fetch comparison:', error)
     } finally {
       setLoading(false)
     }

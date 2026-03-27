@@ -63,7 +63,6 @@ export default function ReportSchedulesPage() {
         setSchedules(data.schedules || [])
       }
     } catch (error) {
-      console.error('Failed to fetch schedules:', error)
     } finally {
       setLoading(false)
     }
@@ -111,7 +110,6 @@ export default function ReportSchedulesPage() {
         fetchSchedules()
       }
     } catch (error) {
-      console.error('Failed to save schedule:', error)
     } finally {
       setSaving(false)
     }
@@ -135,7 +133,6 @@ export default function ReportSchedulesPage() {
         fetchSchedules()
       }
     } catch (error) {
-      console.error('Failed to delete schedule:', error)
     }
   }
 
@@ -155,7 +152,6 @@ export default function ReportSchedulesPage() {
         alert('Report generation started. It will be available in the reports section shortly.')
       }
     } catch (error) {
-      console.error('Failed to run schedule:', error)
     }
   }
 
@@ -178,7 +174,6 @@ export default function ReportSchedulesPage() {
         fetchSchedules()
       }
     } catch (error) {
-      console.error('Failed to toggle schedule:', error)
     }
   }
 

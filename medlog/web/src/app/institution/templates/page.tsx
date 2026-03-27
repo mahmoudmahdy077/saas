@@ -60,7 +60,6 @@ export default function TemplateBuilderPage() {
         setTemplates(data.templates || [])
       }
     } catch (error) {
-      console.error('Failed to fetch templates:', error)
     } finally {
       setLoading(false)
     }
@@ -140,7 +139,6 @@ export default function TemplateBuilderPage() {
         alert(data.error || 'Failed to save template')
       }
     } catch (error) {
-      console.error('Failed to save template:', error)
     } finally {
       setSaving(false)
     }
@@ -155,7 +153,6 @@ export default function TemplateBuilderPage() {
         await fetchTemplates()
       }
     } catch (error) {
-      console.error('Failed to delete template:', error)
     }
   }
 

@@ -112,7 +112,6 @@ export async function GET(request: NextRequest) {
       Resources: resources
     })
   } catch (error: any) {
-    console.error('SCIM GET Error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -167,7 +166,6 @@ export async function POST(request: NextRequest) {
       meta: { resourceType: 'User' }
     }, { status: 201 })
   } catch (error: any) {
-    console.error('SCIM POST Error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -474,7 +474,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ data: result ? { [parsed?.operation || 'result']: result } : {} })
   } catch (error: any) {
-    console.error('GraphQL Error:', error)
     return NextResponse.json({ errors: [{ message: 'Internal server error' }] }, { status: 500 })
   }
 }

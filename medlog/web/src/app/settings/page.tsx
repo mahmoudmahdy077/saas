@@ -57,7 +57,6 @@ export default function SettingsPage() {
         setProfile(data)
       }
     } catch (error) {
-      console.error('Failed to load profile:', error)
     }
   }
 

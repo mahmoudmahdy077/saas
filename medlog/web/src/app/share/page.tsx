@@ -55,7 +55,6 @@ export default function SharePage() {
         setLinks(data.links || [])
       }
     } catch (error) {
-      console.error('Failed to fetch links:', error)
     } finally {
       setLoading(false)
     }
@@ -82,7 +81,6 @@ export default function SharePage() {
         })
       }
     } catch (error) {
-      console.error('Failed to create link:', error)
     } finally {
       setCreating(false)
     }
@@ -97,7 +95,6 @@ export default function SharePage() {
         setLinks(links.filter(l => l.id !== id))
       }
     } catch (error) {
-      console.error('Failed to delete link:', error)
     }
   }
 

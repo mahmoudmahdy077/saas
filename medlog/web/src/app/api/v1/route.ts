@@ -150,7 +150,6 @@ export async function GET(request: NextRequest) {
         }, { status: 400 })
 
     } catch (error: any) {
-        console.error('API Error:', error)
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
 }
@@ -205,7 +204,6 @@ export async function POST(request: NextRequest) {
         }, { status: 400 })
 
     } catch (error: any) {
-        console.error('API Error:', error)
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
 }

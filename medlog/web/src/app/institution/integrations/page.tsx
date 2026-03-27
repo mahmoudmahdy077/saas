@@ -220,7 +220,6 @@ export default function IntegrationsPage() {
         setConnectedIntegrations(data.integrations)
       }
     } catch (error) {
-      console.error('Failed to fetch connected integrations:', error)
     } finally {
       setLoading(false)
     }
@@ -253,7 +252,6 @@ export default function IntegrationsPage() {
         fetchConnectedIntegrations()
       }
     } catch (error) {
-      console.error('Failed to connect:', error)
     } finally {
       setConnectingId(null)
     }
@@ -276,7 +274,6 @@ export default function IntegrationsPage() {
         fetchConnectedIntegrations()
       }
     } catch (error) {
-      console.error('Failed to disconnect:', error)
     }
   }
 

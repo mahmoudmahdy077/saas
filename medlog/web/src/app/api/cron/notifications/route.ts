@@ -94,7 +94,6 @@ export async function POST(request: NextRequest) {
       notificationsCreated: notificationsCreated.length,
     })
   } catch (error) {
-    console.error('Cron job error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

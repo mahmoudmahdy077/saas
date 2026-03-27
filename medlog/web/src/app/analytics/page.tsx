@@ -27,7 +27,6 @@ export default function AnalyticsPage() {
       const data = await res.json()
       setStats(data)
     } catch (e) {
-      console.error(e)
     } finally {
       setLoading(false)
     }

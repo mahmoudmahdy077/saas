@@ -9,7 +9,6 @@ export async function GET() {
         const cookieStore = await cookies()
         const accessToken = cookieStore.get('sb-access-token')?.value
         
-        console.log('[streaks] Access token present:', !!accessToken)
         
         if (!accessToken) {
             return NextResponse.json({ error: 'Unauthorized - no token' }, { status: 401 })
@@ -29,7 +28,6 @@ export async function GET() {
         
         const { data: { user }, error: authError } = await supabase.auth.getUser()
         
-        console.log('[streaks] User:', user?.id, 'Error:', authError)
 
         if (!user) {
             return NextResponse.json({ error: 'Unauthorized - ' + (authError?.message || 'unknown') }, { status: 401 })
@@ -65,7 +63,6 @@ export async function GET() {
             loggedToday: lastLogged === today,
         })
     } catch (error) {
-        console.error('Error fetching streak:', error)
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
 }

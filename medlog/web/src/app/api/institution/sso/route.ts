@@ -50,7 +50,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ saml: config })
   } catch (error: any) {
-    console.error('Error fetching SAML config:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
@@ -148,7 +147,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
   } catch (error: any) {
-    console.error('Error managing SAML config:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
@@ -176,7 +174,6 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error('Error deleting SAML config:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

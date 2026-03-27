@@ -72,7 +72,6 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ reports: reports || [] })
   } catch (error) {
-    console.error('Reports fetch error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -144,7 +143,6 @@ export async function POST(request: Request) {
           aiInsights = data.choices[0]?.message?.content || ''
         }
       } catch (err) {
-        console.error('AI summary error:', err)
       }
     }
 
@@ -169,7 +167,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ report })
   } catch (error) {
-    console.error('Report create error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

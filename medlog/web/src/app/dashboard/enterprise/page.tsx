@@ -44,7 +44,6 @@ export default function EnterpriseDashboard() {
       const data = await response.json()
       setStats(data)
     } catch (error) {
-      console.error('Failed to fetch enterprise stats:', error)
     } finally {
       setLoading(false)
     }
@@ -62,7 +61,6 @@ export default function EnterpriseDashboard() {
       a.download = `medlog-report-${type}-${new Date().toISOString().split('T')[0]}.pdf`
       a.click()
     } catch (error) {
-      console.error('Export failed:', error)
     }
   }
 

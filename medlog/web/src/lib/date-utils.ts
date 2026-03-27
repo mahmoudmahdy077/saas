@@ -10,7 +10,6 @@ export function getLocalDate(timezone: string = 'UTC', date: Date = new Date()):
             day: '2-digit'
         }).format(date)
     } catch (e) {
-        console.error(`Invalid timezone: ${timezone}, falling back to UTC`)
         return date.toISOString().split('T')[0]
     }
 }

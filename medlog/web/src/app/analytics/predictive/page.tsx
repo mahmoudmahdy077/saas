@@ -53,7 +53,6 @@ export default function PredictiveAnalyticsPage() {
         setData(result)
       }
     } catch (error) {
-      console.error('Failed to fetch predictions:', error)
     } finally {
       setLoading(false)
     }

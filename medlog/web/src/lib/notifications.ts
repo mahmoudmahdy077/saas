@@ -25,7 +25,6 @@ export async function createNotification(params: CreateNotificationParams): Prom
       params.data || {}
     ])
   } catch (error) {
-    console.error('Failed to create notification:', error)
   }
 }
 
@@ -52,7 +51,6 @@ export async function createNotificationForInstitution(
       })
     }
   } catch (error) {
-    console.error('Failed to create institution notification:', error)
   }
 }
 
@@ -68,7 +66,6 @@ export async function queueEmail(
       VALUES ($1, $2, $3, $4)
     `, [userId, email, subject, body])
   } catch (error) {
-    console.error('Failed to queue email:', error)
   }
 }
 

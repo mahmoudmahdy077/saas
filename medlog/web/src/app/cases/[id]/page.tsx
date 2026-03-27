@@ -77,7 +77,6 @@ export default function CaseDetailPage() {
         router.push('/cases')
       }
     } catch (error) {
-      console.error('Failed to fetch case:', error)
       router.push('/cases')
     } finally {
       setLoading(false)
@@ -99,7 +98,6 @@ export default function CaseDetailPage() {
         setCaseData(prev => prev ? { ...prev, ai_summary: data.summary } : null)
       }
     } catch (error) {
-      console.error('Failed to generate AI summary:', error)
     } finally {
       setGeneratingAI(false)
     }
@@ -136,7 +134,6 @@ export default function CaseDetailPage() {
             })
           }
         } catch (error) {
-          console.error('Upload failed:', error)
         }
       }
     }
@@ -165,7 +162,6 @@ export default function CaseDetailPage() {
         })
       }
     } catch (error) {
-      console.error('Delete failed:', error)
     }
   }
 

@@ -47,7 +47,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ branding: result.rows[0] })
   } catch (error: any) {
-    console.error('Error fetching branding:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
@@ -96,7 +95,6 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ branding: result.rows[0] })
   } catch (error: any) {
-    console.error('Error updating branding:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

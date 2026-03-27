@@ -160,7 +160,6 @@ export async function POST(request: NextRequest) {
       results
     })
   } catch (error: any) {
-    console.error('Cron error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

@@ -80,7 +80,6 @@ export async function GET(request: NextRequest) {
     const result = await pool.query('SELECT key, value, description, updated_at FROM public.website_settings ORDER BY key')
     return NextResponse.json({ settings: result.rows })
   } catch (error: any) {
-    console.error('Admin settings GET error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -115,7 +114,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error('Admin settings POST error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -156,7 +154,6 @@ export async function PUT(request: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (error: any) {
-    console.error('Admin settings PUT error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

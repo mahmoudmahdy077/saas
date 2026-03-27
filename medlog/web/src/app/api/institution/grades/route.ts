@@ -85,7 +85,6 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ grades: gradeHistory })
   } catch (error) {
-    console.error('Grades fetch error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -130,7 +129,6 @@ export async function PUT(request: Request) {
 
     return NextResponse.json({ report })
   } catch (error) {
-    console.error('Grade update error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

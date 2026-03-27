@@ -94,7 +94,6 @@ export default function InstitutionAdminPage() {
         setResidents(resData.residents || [])
       }
     } catch (error) {
-      console.error('Failed to fetch data:', error)
     } finally {
       setLoading(false)
     }
@@ -154,7 +153,6 @@ export default function InstitutionAdminPage() {
         alert(error.error || 'Failed to send invitation')
       }
     } catch (error) {
-      console.error('Invite error:', error)
     } finally {
       setProcessing(false)
     }
@@ -178,7 +176,6 @@ export default function InstitutionAdminPage() {
         alert(error.error || 'Failed to update resident')
       }
     } catch (error) {
-      console.error('Update error:', error)
     } finally {
       setProcessing(false)
     }
@@ -198,7 +195,6 @@ export default function InstitutionAdminPage() {
         alert(error.error || 'Failed to remove resident')
       }
     } catch (error) {
-      console.error('Removal error:', error)
     }
   }
 

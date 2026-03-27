@@ -71,7 +71,6 @@ export default function BrandingSettingsPage() {
         })
       }
     } catch (error) {
-      console.error('Failed to fetch branding:', error)
     } finally {
       setLoading(false)
     }
@@ -95,7 +94,6 @@ export default function BrandingSettingsPage() {
         setTimeout(() => setSaved(false), 3000)
       }
     } catch (error) {
-      console.error('Failed to save branding:', error)
     } finally {
       setSaving(false)
     }
@@ -121,7 +119,6 @@ export default function BrandingSettingsPage() {
         setFormData({ ...formData, logo_url: data.url })
       }
     } catch (error) {
-      console.error('Failed to upload logo:', error)
     } finally {
       setUploading(false)
     }

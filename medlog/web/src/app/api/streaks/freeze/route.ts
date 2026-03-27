@@ -79,7 +79,6 @@ export async function POST() {
             streakPreserved: profile.current_streak,
         })
     } catch (error) {
-        console.error('Error applying streak freeze:', error)
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
 }

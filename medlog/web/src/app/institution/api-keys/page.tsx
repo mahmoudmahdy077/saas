@@ -55,7 +55,6 @@ export default function APIKeysPage() {
         setKeys(data.keys || [])
       }
     } catch (error) {
-      console.error('Failed to fetch API keys:', error)
     } finally {
       setLoading(false)
     }
@@ -93,7 +92,6 @@ export default function APIKeysPage() {
         setFormData({ name: '', can_read: true, can_write: false, expires_in_days: 365 })
       }
     } catch (error) {
-      console.error('Failed to create API key:', error)
     } finally {
       setSaving(false)
     }
@@ -111,7 +109,6 @@ export default function APIKeysPage() {
       })
       fetchKeys()
     } catch (error) {
-      console.error('Failed to revoke API key:', error)
     }
   }
 
@@ -127,7 +124,6 @@ export default function APIKeysPage() {
       })
       fetchKeys()
     } catch (error) {
-      console.error('Failed to delete API key:', error)
     }
   }
 

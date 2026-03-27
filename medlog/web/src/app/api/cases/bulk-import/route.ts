@@ -177,7 +177,6 @@ export async function POST(request: NextRequest) {
         }).eq('id', user.id)
       }
     } catch (streakError) {
-      console.error('Bulk streak update error:', streakError)
     }
 
     return NextResponse.json({
@@ -185,7 +184,6 @@ export async function POST(request: NextRequest) {
       count: formattedCases.length
     })
   } catch (error) {
-    console.error('Bulk import error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

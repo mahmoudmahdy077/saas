@@ -97,7 +97,6 @@ export default function Dashboard() {
       setData(dashboardData)
       setLoading(false)
     } catch (error) {
-      console.error('Failed to fetch dashboard data:', error)
       setLoading(false)
     }
   }

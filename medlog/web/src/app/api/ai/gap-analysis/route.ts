@@ -192,7 +192,6 @@ Be specific with recommendations for training improvement.`
                     aiInsight = data.choices[0]?.message?.content || ''
                 }
             } catch (err) {
-                console.error('OpenAI gap analysis error:', err)
             }
         }
 
@@ -208,7 +207,6 @@ Be specific with recommendations for training improvement.`
             aiInsight,
         })
     } catch (error) {
-        console.error('Gap analysis error:', error)
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
 }

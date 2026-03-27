@@ -47,7 +47,6 @@ export default function AIUsageAnalyticsPage() {
         setSummary(data.summary)
       }
     } catch (error) {
-      console.error('Failed to fetch AI usage:', error)
     } finally {
       setLoading(false)
     }

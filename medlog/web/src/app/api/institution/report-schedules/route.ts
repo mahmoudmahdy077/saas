@@ -75,7 +75,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ schedules: result.rows })
   } catch (error: any) {
-    console.error('Error fetching report schedules:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
@@ -194,7 +193,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
   } catch (error: any) {
-    console.error('Error managing report schedule:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

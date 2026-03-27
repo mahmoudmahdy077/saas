@@ -104,7 +104,6 @@ export async function POST(request: NextRequest) {
     })
 
     if (profileError) {
-      console.error('Profile creation error:', profileError)
       return NextResponse.json(
         { error: 'Failed to create profile' },
         { status: 500 }
@@ -119,7 +118,6 @@ export async function POST(request: NextRequest) {
       message: 'Registration successful. Please check your email to verify.',
     })
   } catch (error) {
-    console.error('Registration error:', error)
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

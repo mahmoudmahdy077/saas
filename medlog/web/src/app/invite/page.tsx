@@ -42,7 +42,6 @@ export default function InvitePage() {
         setInvites(data.invites || [])
       }
     } catch (error) {
-      console.error('Failed to fetch invites:', error)
     } finally {
       setLoading(false)
     }
@@ -65,7 +64,6 @@ export default function InvitePage() {
         setEmail('')
       }
     } catch (error) {
-      console.error('Failed to send invite:', error)
     } finally {
       setSending(false)
     }
@@ -80,7 +78,6 @@ export default function InvitePage() {
         setInvites(invites.filter(i => i.id !== id))
       }
     } catch (error) {
-      console.error('Failed to cancel invite:', error)
     }
   }
 

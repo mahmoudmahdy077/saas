@@ -88,7 +88,6 @@ export default function ReportsPage() {
         setResidents(data.residents || [])
       }
     } catch (error) {
-      console.error('Failed to fetch data:', error)
     } finally {
       setLoading(false)
     }
@@ -128,7 +127,6 @@ export default function ReportsPage() {
         alert(data.error || 'Failed to create report')
       }
     } catch (error) {
-      console.error('Failed to create report:', error)
     } finally {
       setCreating(false)
     }

@@ -66,7 +66,6 @@ export default function SSOSettingsPage() {
         }
       }
     } catch (error) {
-      console.error('Failed to fetch SSO config:', error)
     } finally {
       setLoading(false)
     }
@@ -150,7 +149,6 @@ export default function SSOSettingsPage() {
       })
       fetchConfig()
     } catch (error) {
-      console.error('Failed to disable SSO:', error)
     }
   }
 
@@ -173,7 +171,6 @@ export default function SSOSettingsPage() {
         enabled: false
       })
     } catch (error) {
-      console.error('Failed to delete SSO config:', error)
     }
   }
 

@@ -55,7 +55,6 @@ export default function ReferencesPage() {
         setRole(data.profile?.role || '')
       }
     } catch (error) {
-      console.error('Failed to fetch role:', error)
     }
   }
 
@@ -68,7 +67,6 @@ export default function ReferencesPage() {
         setRequests(data.requests || [])
       }
     } catch (error) {
-      console.error('Failed to fetch references:', error)
     } finally {
       setLoading(false)
     }
@@ -82,7 +80,6 @@ export default function ReferencesPage() {
         setResidents(data.residents || [])
       }
     } catch (error) {
-      console.error('Failed to fetch residents:', error)
     }
   }
 
@@ -104,7 +101,6 @@ export default function ReferencesPage() {
       setFormData({ recipient_name: '', recipient_email: '', resident_id: '' })
       fetchReferences()
     } catch (error) {
-      console.error('Failed to create reference request:', error)
     } finally {
       setSaving(false)
     }
@@ -122,7 +118,6 @@ export default function ReferencesPage() {
       })
       fetchReferences()
     } catch (error) {
-      console.error('Failed to delete reference:', error)
     }
   }
 

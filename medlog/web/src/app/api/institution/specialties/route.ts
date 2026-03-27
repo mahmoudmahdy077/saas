@@ -53,7 +53,6 @@ export async function GET() {
 
     return NextResponse.json({ specialties: specialties || [] })
   } catch (error) {
-    console.error('Specialties fetch error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -100,7 +99,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ specialty: data })
   } catch (error) {
-    console.error('Specialty create error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -145,7 +143,6 @@ export async function PUT(request: Request) {
 
     return NextResponse.json({ specialty: data })
   } catch (error) {
-    console.error('Specialty update error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -188,7 +185,6 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Specialty delete error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

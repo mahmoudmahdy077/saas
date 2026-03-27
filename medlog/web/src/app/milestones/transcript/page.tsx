@@ -75,7 +75,6 @@ export default function MilestoneTranscriptPage() {
         setResident(data.resident)
       }
     } catch (error) {
-      console.error('Failed to fetch transcript:', error)
     } finally {
       setLoading(false)
     }

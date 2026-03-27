@@ -54,7 +54,6 @@ function CompliancePageContent() {
         setReportData(data)
       }
     } catch (error) {
-      console.error('Failed to fetch report:', error)
     } finally {
       setLoading(false)
     }

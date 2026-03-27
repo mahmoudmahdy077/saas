@@ -172,7 +172,6 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error: any) {
-    console.error('Upload error:', error)
     return NextResponse.json({ error: 'Upload failed' }, { status: 500 })
   }
 }
@@ -273,7 +272,6 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: true })
 
   } catch (error: any) {
-    console.error('Delete error:', error)
     return NextResponse.json({ error: 'Delete failed' }, { status: 500 })
   }
 }

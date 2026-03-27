@@ -106,7 +106,6 @@ export default function AuditLogsPage() {
         setAuditLogs(data.audit_logs || [])
       }
     } catch (error) {
-      console.error('Failed to fetch audit logs:', error)
     } finally {
       setLoading(false)
     }
@@ -160,7 +159,6 @@ export default function AuditLogsPage() {
       a.download = `audit-logs-${new Date().toISOString().split('T')[0]}.csv`
       a.click()
     } catch (error) {
-      console.error('Failed to export audit logs:', error)
     }
   }
 

@@ -56,7 +56,6 @@ export default function EnhancedAnalyticsPage() {
         setData(result)
       }
     } catch (error) {
-      console.error('Failed to fetch analytics:', error)
     } finally {
       setLoading(false)
     }

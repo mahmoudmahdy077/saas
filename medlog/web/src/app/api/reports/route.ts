@@ -67,7 +67,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid report type' }, { status: 400 })
 
   } catch (error: any) {
-    console.error('Reports API error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }
@@ -442,7 +441,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
 
   } catch (error: any) {
-    console.error('Reports POST error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

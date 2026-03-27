@@ -28,9 +28,6 @@ export default function LoginPage() {
 
       const data = await response.json()
 
-      console.log('Login response:', data)
-      console.log('Response ok:', response.ok)
-      console.log('Cookies:', document.cookie)
 
       if (!response.ok) {
         throw new Error(data.error || 'Login failed')
