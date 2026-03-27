@@ -1,48 +1,52 @@
-import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
+/**
+ * Security Headers Middleware
+ * Adds essential security headers to all responses
+ */
 
-const rateLimitStore = new Map<string, { count: number; resetAt: number }>()
-
-const RATE_LIMITS = {
-  api: { limit: 100, windowMs: 60000 },
-  auth: { limit: 5, windowMs: 300000 },
-  export: { limit: 10, windowMs: 3600000 },
-}
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  const ip = request.headers.get('x-forwarded-for') || 'unknown'
-  const path = request.nextUrl.pathname
+  const response = NextResponse.next();
+
+  // Security headers
+  response.headers.set('X-DNS-Prefetch-Control', 'on');
+  response.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
+  response.headers.set('X-XSS-Protection', '1; mode=block');
+  response.headers.set('X-Frame-Options', 'SAMEORIGIN');
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   
-  // Skip rate limiting for static files
-  if (path.startsWith('/_next') || path.startsWith('/static')) {
-    return NextResponse.next()
-  }
+  // Content Security Policy
+  const csp = [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' blob: data: https:",
+    "font-src 'self'",
+    "connect-src 'self' https://*.supabase.co",
+    "frame-ancestors 'self'",
+  ].join('; ');
+  
+  response.headers.set('Content-Security-Policy', csp);
 
-  // Determine rate limit based on path
-  let limit = RATE_LIMITS.api
-  if (path.includes('/auth')) limit = RATE_LIMITS.auth
-  if (path.includes('/export')) limit = RATE_LIMITS.export
+  // Remove server header
+  response.headers.delete('server');
+  response.headers.delete('x-powered-by');
 
-  const key = `${ip}:${path}`
-  const now = Date.now()
-  const record = rateLimitStore.get(key)
-
-  if (!record || now > record.resetAt) {
-    rateLimitStore.set(key, { count: 1, resetAt: now + limit.windowMs })
-    return NextResponse.next()
-  }
-
-  if (record.count >= limit.limit) {
-    return NextResponse.json(
-      { error: 'Rate limit exceeded', code: 'RATE_LIMITED' },
-      { status: 429 }
-    )
-  }
-
-  record.count++
-  return NextResponse.next()
+  return response;
 }
 
 export const config = {
-  matcher: '/api/:path*',
-}
+  matcher: [
+    /*
+     * Match all request paths except:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public files (public directory)
+     */
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
+};
