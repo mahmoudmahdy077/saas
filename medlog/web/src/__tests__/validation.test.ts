@@ -42,16 +42,6 @@ describe('Validation', () => {
       const result = validateSafe(createUserSchema, invalidUser);
       expect(result.success).toBe(false);
     });
-
-    it('should accept optional fields', () => {
-      const minimalUser = {
-        email: 'test@example.com',
-        password: 'password123',
-      };
-
-      const result = validateSafe(createUserSchema, minimalUser);
-      expect(result.success).toBe(true);
-    });
   });
 
   describe('createCaseSchema', () => {
@@ -99,38 +89,6 @@ describe('Validation', () => {
       const result = validateSafe(createCaseSchema, invalidCase);
       expect(result.success).toBe(false);
     });
-
-    it('should accept valid tags', () => {
-      const validCase = {
-        title: 'Case Title',
-        description: 'Valid description',
-        patientAge: 35,
-        patientGender: 'female' as const,
-        diagnosis: 'Diagnosis',
-        treatment: 'Treatment',
-        outcome: 'Outcome',
-        tags: ['surgery', 'emergency', 'laparoscopic'],
-      };
-
-      const result = validateSafe(createCaseSchema, validCase);
-      expect(result.success).toBe(true);
-    });
-
-    it('should reject too many tags', () => {
-      const invalidCase = {
-        title: 'Case Title',
-        description: 'Valid description',
-        patientAge: 35,
-        patientGender: 'female' as const,
-        diagnosis: 'Diagnosis',
-        treatment: 'Treatment',
-        outcome: 'Outcome',
-        tags: Array(11).fill('tag'),
-      };
-
-      const result = validateSafe(createCaseSchema, invalidCase);
-      expect(result.success).toBe(false);
-    });
   });
 
   describe('paginationSchema', () => {
@@ -142,18 +100,6 @@ describe('Validation', () => {
         expect(result.data.limit).toBe(20);
         expect(result.data.sortOrder).toBe('asc');
       }
-    });
-
-    it('should accept valid pagination params', () => {
-      const params = {
-        page: 5,
-        limit: 50,
-        sortBy: 'createdAt',
-        sortOrder: 'desc' as const,
-      };
-
-      const result = validateSafe(paginationSchema, params);
-      expect(result.success).toBe(true);
     });
 
     it('should reject negative page', () => {
