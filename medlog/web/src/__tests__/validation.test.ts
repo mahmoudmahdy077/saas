@@ -3,9 +3,9 @@
  * Test coverage for critical functions
  */
 
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { validate, validateSafe } from '../validation';
-import { createCaseSchema, createUserSchema, paginationSchema } from '../validation';
+import { describe, it, expect } from 'vitest';
+import { validateSafe } from '../lib/validation';
+import { createCaseSchema, createUserSchema, paginationSchema } from '../lib/validation';
 
 describe('Validation', () => {
   describe('createUserSchema', () => {
