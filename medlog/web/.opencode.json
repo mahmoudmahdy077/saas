@@ -1,0 +1,32 @@
+{
+  "agents": {
+    "hermes": {
+      "enabled": true,
+      "model": "bailian/qwen3.5-plus",
+      "capabilities": [
+        "code-review",
+        "testing",
+        "documentation",
+        "debugging"
+      ],
+      "context": {
+        "workspace": "/root/.openclaw/workspace/saas-project/medlog",
+        "focus": "MedLog SaaS Development"
+      }
+    }
+  },
+  "acp": {
+    "enabled": true,
+    "defaultAgent": "hermes",
+    "routing": {
+      "code-review": "hermes",
+      "testing": "hermes",
+      "documentation": "hermes",
+      "debugging": "hermes"
+    }
+  },
+  "sessions": {
+    "mode": "persistent",
+    "cleanup": "keep"
+  }
+}
